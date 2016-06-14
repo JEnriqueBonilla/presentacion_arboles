@@ -1,0 +1,42 @@
+
+---
+title: "Introducción a Aprendizaje Estadístico y Árboles de Clasificación"
+author: "Enrique Bonilla, Kael Huerta"
+output:
+  beamer_presentation:
+    toc: yes
+header-includes: 
+- \usepackage[spanish]{babel}
+- \usepackage[utf8]{inputenc}
+- \usepackage{amsmath,amsfonts,amsthm}
+- \usepackage{graphicx}
+---
+
+# Sección 1
+
+## Prueba
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+
+## Output prueba
+
+```{r, eval=T}
+print("Hello world")
+```
+
+$$\beta$$
+
+# Seccción 2
+
+## Output prueba 2
+
+```{r, eval=T, include=T, height=4, width=8}
+plot(mtcars)
+```
+
+
+
+

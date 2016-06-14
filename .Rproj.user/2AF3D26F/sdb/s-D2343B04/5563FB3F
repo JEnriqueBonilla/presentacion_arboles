@@ -1,0 +1,18 @@
+{
+    "contents" : "\n---\ntitle: \"Introducción a Aprendizaje Estadístico y Árboles de Clasificación\"\nauthor: \"Enrique Bonilla, Kael Huerta\"\noutput:\n  beamer_presentation:\n    toc: yes\nheader-includes: \n- \\usepackage[spanish]{babel}\n- \\usepackage[utf8]{inputenc}\n- \\usepackage{amsmath,amsfonts,amsthm}\n- \\usepackage{graphicx}\n---\n\n# Sección 1\n\n## Prueba\n\n- Bullet 1\n- Bullet 2\n- Bullet 3\n\n\n## Output prueba\n\n```{r, eval=T}\nprint(\"Hello world\")\n```\n\n$$\\beta$$\n\n# Seccción 2\n\n## Output prueba 2\n\n```{r, eval=T, include=T, height=4, width=8}\nplot(mtcars)\n```\n\n\n\n\n",
+    "created" : 1465924601806.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3652610868",
+    "id" : "5563FB3F",
+    "lastKnownWriteTime" : 1465930959,
+    "path" : "~/Repositorios/2016/arboles_clasificacion_p/Presentacion_arboles.Rmd",
+    "project_path" : "Presentacion_arboles.Rmd",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "type" : "r_markdown"
+}
