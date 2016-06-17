@@ -1,0 +1,69 @@
+---
+title: "Aprendizaje Estadístico y Árboles de Clasificación."
+author: "Enrique Bonilla, Kael Huerta"
+date: "Julio 6, 2016"
+output: 
+  ioslides_presentation:
+    toc: yes
+    widescreen: true
+    css: ./css/swiss.css
+header-includes: 
+- \usepackage[spanish]{babel}
+- \usepackage[utf8]{inputenc}
+- \usepackage{amsmath,amsfonts,amsthm}
+- \usepackage{graphicx}
+ 
+runtime: shiny
+---
+
+```{r,echo=FALSE,warning=FALSE, message=FALSE,error=FALSE}
+require(ggplot2)
+require(stringr)
+require(lubridate)
+require(plyr)
+require(reshape2)
+require(dplyr)
+require(rpart)
+require(randomForest)
+require(gbm)
+require(partykit)
+require(png)
+```
+
+# Introducción 
+
+
+##  Aprendizaje Estadístico.
+
+- Existen 2 formas de concebir el modelado estadístico:
+    + Data modeling culture: diagnóstico (teoría fuerte, pocos datos).
+    + Alogiritmic modeling culture: (poca teoría, muchos datos).
+
+- El Aprendizaje Estadístico, utiliza el segundo enfoque. 
+    
+##  Aprendizaje Estadístico 
+
+- Términos relacionados:
+    + Aprendizaje de Máquina: algoritmos.
+    + Minería de Datos: bases de datos grandes.
+    + Aprendizaje estadístico: teoría estadística.
+
+##  Aprendizaje Estadístico 
+- Dos tipos de problemas:
+    + Aprendizaje Supervisado: predecir variable dada $Y$ 
+    (conocemos respuesta).
+    
+```{r fig.width=5, fig.height=3,echo=FALSE}
+
+img <- readPNG("./imagenes/regresion_lineal.png")
+ grid.raster(img)
+ img2 <- readPNG("./imagenes/clasificacion.png")
+ grid.raster(img2)
+```
+    
+
+
+
+
+
+
