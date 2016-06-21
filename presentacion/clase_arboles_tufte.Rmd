@@ -58,7 +58,7 @@ futuras observaciones. Aunque no se ha desarrollado
 mucha teoría matemática, se desempeña muy bien ante 
 grandes cantidades de datos.
 
-Cada uno de estos enfoques es útli en distintas situaciones. 
+Cada uno de estos enfoques es útil en distintas situaciones. 
 En particular, el Aprendizaje Estadístico utiliza el segundo enfoque. 
     
 Algunos términos relacionados que son frecuentemente mencionados en
@@ -66,14 +66,14 @@ la literatura son los siguientes
 
 - **Aprendizaje de Máquina**: análisis de algoritmos;
 - **Minería de Datos**: bases de datos grandes;
-- **Aprendizaje estadístico**: teoría estadística detras de
+- **Aprendizaje estadístico**: teoría estadística detrás de
 las últimas dos.
 
 El aprendizaje estadístico se divide en dos principales ramas:
    
 - **Aprendizaje Supervisado**: predecir variable dada $Y$ 
     (conocemos respuesta). Si la variable respuesta es
-    númerica, se conoce como problema de *regresión*. 
+    numérica, se conoce como problema de *regresión*. 
     Si es categórica, se denomina problema de *clasificación*.
 
 
@@ -117,7 +117,7 @@ modelo <- datos %>%
 ```
 
 - **Aprendizaje No Supervisado**: no hay variable respuesta.
-Se trata de encontar estructuras intrisecas en los datos.
+Se trata de encontrar estructuras intrínsecas en los datos.
 
 ```{r fig-main, fig.cap = "Problema de agrupamiento.", cache = F}
  
@@ -136,11 +136,34 @@ datos %>%
   ylab("Tiempo de espera para siguiente erupción")
 ```
 
-Los *árboles de clasificación* (CART, Bosques Aleatorios, etc)
+Los *árboles de clasificación* (CART, Bosques Aleatorios, etc.)
 métodos de aprendizaje supervisado. Estos pueden tener como
 respuesta una variable numérica ($Y$) o una variable 
 categórica ($G$).
 
 ## Supuestos y notación
+
+Se define a $X = (X_1, \ldots, X_p)$ como la variable de entrada 
+y a $Y$ como la variable respuesta, cuantitativa ($G$ cualitativa).
+Se asume que $X,Y$ están relacionadas a través de un modelo 
+probabilístico $P(X,Y)$ donde $P(X,Y)$ es su distribución de 
+probabilidad conjunta.
+
+En el caso de regresión, suponemos que se puede escribir $Y = f(X) + \epsilon$
+donde $E(\epsilon) = 0$ y es independiente de X. Para este modelo, 
+ $f(x) = E(Y \mid X = x)$^[En algunos problemas,
+se puede suponer que $Y = f(x)$ o que los errores no son independientes
+e idénticamente distribuidos.]. Nuestro objetivo es estimar $f(x)$
+por medio de una aproximación $\hat{f}$ usando los datos observados.
+
+Cuando se trata del problema de clasificación, nuestro objetivo es 
+estimar $P(G \mid X)$ y esto se modela directamente. 
+
+Para construir la regla de predicción ($\hat{f}$ o $\hat{P}$ 
+dependiendo el caso), usamos datos observados 
+$L = \{(x_1, y_1), \ldots, (x_n, y_n)\}$. A este conjunto, se le conoce 
+como conjunto de entrenamiento. 
+
+## Teoría de decisión
 
 
