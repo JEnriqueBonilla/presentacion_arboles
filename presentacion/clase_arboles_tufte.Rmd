@@ -151,17 +151,19 @@ probabilidad conjunta.
 
 En el caso de regresión, suponemos que se puede escribir $Y = f(X) + \epsilon$
 donde $E(\epsilon) = 0$ y es independiente de X. Para este modelo, 
- $f(x) = E(Y \mid X = x)$^[En algunos problemas,
+ $f(x) = E(Y \mid X = x)$.^[En algunos problemas,
 se puede suponer que $Y = f(x)$ o que los errores no son independientes
-e idénticamente distribuidos.]. Nuestro objetivo es estimar $f(x)$
+e idénticamente distribuidos.] Nuestro objetivo es estimar $f(x)$
 por medio de una aproximación $\hat{f}$ usando los datos observados.
+^[Típicamente, la $f$ estimada depende de un parámetro
+o conjunto de parámetros de ajuste $\alpha$, i.e, $\hat{f}_{\alpha}$. ]
 
 Cuando se trata del problema de clasificación, nuestro objetivo es 
 estimar $P(G \mid X)$ y esto se modela directamente. 
 
 Para construir la regla de predicción ($\hat{f}$ o $\hat{P}$ 
 dependiendo el caso), usamos datos observados 
-$L = \{(x_1, y_1), \ldots, (x_n, y_n)\}$. A este conjunto, se le conoce 
+$\Gamma  = \{(x_1, y_1), \ldots, (x_n, y_n)\}$. A este conjunto, se le conoce 
 como conjunto de entrenamiento. 
 
 ## Teoría de decisión
