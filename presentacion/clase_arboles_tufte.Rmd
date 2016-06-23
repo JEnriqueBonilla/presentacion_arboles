@@ -306,7 +306,7 @@ de la función de pérdida y del tipo de problema. Por lo general,
 $E_{rr\gamma}$ tiene un comportamiento con la misma estructura que 
 $E_{rr}$ pero no igual.
 
-```{r , fig.cap = "varianza-sesgo: entrenamiento vs prueba", cache = F}
+```{r , fig.cap = "Varianza-Sesgo: entrenamiento vs prueba.", cache = F}
  
 #Método: k vecinos más cercanos
 #Datos: Munich Rent Standards (library(kknn))
