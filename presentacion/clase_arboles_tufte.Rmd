@@ -259,12 +259,15 @@ o por métodos de reuso de muestras (validación cruzada, boostrap).
 Si tenemos muchos datos, lo mejor que podemos hacer es dividir
 la muestra observada en 3 conjuntos ajenos:
 
-- **Conjunto de entrenamiento**:se usa para entrenar el modelo 
+- **Conjunto de entrenamiento**: se usa para entrenar el modelo 
 (puede sobre-ajustar). Se recomienda, empíricamente, $50\%$ de
 la muestra.
+
 - **Conjunto de prueba**: se usa para seleccionar modelos 
-(se puede sobre-ajustar). Se recomienda, empíricamente, $25\%$ de
+(aún si estima $E_{rr\gamma}$, se puede sobre-ajustar). 
+Se recomienda, empíricamente, $25\%$ de
 la muestra.
+
 - **Conjunto de validación**: se utiliza para aproximar $E_{rr\gamma}$
 de nuestro modelo final. Se recomienda, empíricamente, $25\%$ de
 la muestra y sólo debe ser utilizado al final para calcular el error. 
@@ -273,7 +276,8 @@ sobre-ajustar).
 
 Si tenemos un menor tamaño de muestra, esta se separa sólo en
 conjuntos ajenos de entrenamiento y validación. Con el conjunto
-de entrenamiento estimamos $E_{rr}$ y comparamos-seleccionamos modelos.
+de entrenamiento estimamos $E_{rr}$ (por medio de métodos de
+reuso de muesta o in-sample) y comparamos-seleccionamos modelos.
 Con el conjunto de validación estimamos $E_{rr\gamma}$ del modelo final. 
 
 
