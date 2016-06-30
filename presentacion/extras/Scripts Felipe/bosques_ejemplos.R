@@ -1,10 +1,9 @@
-
 ###Bosques aleatorios#################################
 library(randomForest)
 library(rpart)
 library(mlbench)
 data(BostonHousing)
-set.seed(111)
+set.seed(15)
 train<-sample(1:nrow(BostonHousing),400)
 BostonHousing$train<-FALSE
 BostonHousing$train[train]<-TRUE
@@ -12,7 +11,7 @@ BostonHousing_train<-BostonHousing[BostonHousing$train,]
 BostonHousing_test<-BostonHousing[!BostonHousing$train,]
 BostonHousing_train$train<-NULL
 
-arbol_housing<-rpart(medv~.,data=BostonHousing_train,method="anova",control=rpart.control(cp=0.001,xval=10))
+arbol_housing <- rpart(medv~.,data=BostonHousing_train,method="anova",control=rpart.control(cp=0.001,xval=10))
 
 printcp(arbol_housing)
 plotcp(arbol_housing)
@@ -20,7 +19,7 @@ mean((predict(arbol_housing, BostonHousing_test)-BostonHousing_test$medv)^2)
 
 
 bosque_Housing<-randomForest(medv~.,data=BostonHousing_train,ntree=1000,importance=TRUE,do.trace=TRUE)
- 
+
 print(bosque_Housing)
 plot(bosque_Housing$mse)
 #Comparación de las predicciones OOB con los observados
@@ -69,28 +68,28 @@ abline(a=17,b=0)
 
 spam.train<-read.table("./spam.train",sep=",")
 names(spam.train) <- c("wfmake", "wfaddress", "wfall", "wf3d", "wfour",
-	"wfover", "wfremove", "wfinternet", "wforder", "wfmail", 
-	"wfreceive", "wfwill", "wfpeople", "wfreport", "wfaddresses", 
-	"wffree", "wfbusiness", "wfemail", "wfyou", "wfcredit", "wfyour", 
-	"wffont", "wf000", "wfmoney", "wfhp", "wfhpl", "wfgeorge", "wf650", 
-	"wflab", "wflabs", "wftelnet", "wf857", "wfdata", "wf415", "wf85", 
-	"wftechnology", "wf1999", "wfparts", "wfpm", "wfdirect", "wfcs", 
-	"wfmeeting", "wforiginal", "wfproject", "wfre", "wfedu", "wftable", 
-	"wfconference", "cfsc", "cfpar", "cfbrack", "cfexc", "cfdollar", 
-	"cfpound", "crlaverage", "crllongest", "crltotal", "spam")
+                       "wfover", "wfremove", "wfinternet", "wforder", "wfmail", 
+                       "wfreceive", "wfwill", "wfpeople", "wfreport", "wfaddresses", 
+                       "wffree", "wfbusiness", "wfemail", "wfyou", "wfcredit", "wfyour", 
+                       "wffont", "wf000", "wfmoney", "wfhp", "wfhpl", "wfgeorge", "wf650", 
+                       "wflab", "wflabs", "wftelnet", "wf857", "wfdata", "wf415", "wf85", 
+                       "wftechnology", "wf1999", "wfparts", "wfpm", "wfdirect", "wfcs", 
+                       "wfmeeting", "wforiginal", "wfproject", "wfre", "wfedu", "wftable", 
+                       "wfconference", "cfsc", "cfpar", "cfbrack", "cfexc", "cfdollar", 
+                       "cfpound", "crlaverage", "crllongest", "crltotal", "spam")
 spam.train$spam<-as.factor(spam.train$spam)
 
 spam.test<-read.table("spam.test",sep=",")
 names(spam.test) <- c("wfmake", "wfaddress", "wfall", "wf3d", "wfour",
-	"wfover", "wfremove", "wfinternet", "wforder", "wfmail", 
-	"wfreceive", "wfwill", "wfpeople", "wfreport", "wfaddresses", 
-	"wffree", "wfbusiness", "wfemail", "wfyou", "wfcredit", "wfyour", 
-	"wffont", "wf000", "wfmoney", "wfhp", "wfhpl", "wfgeorge", "wf650", 
-	"wflab", "wflabs", "wftelnet", "wf857", "wfdata", "wf415", "wf85", 
-	"wftechnology", "wf1999", "wfparts", "wfpm", "wfdirect", "wfcs", 
-	"wfmeeting", "wforiginal", "wfproject", "wfre", "wfedu", "wftable", 
-	"wfconference", "cfsc", "cfpar", "cfbrack", "cfexc", "cfdollar", 
-	"cfpound", "crlaverage", "crllongest", "crltotal", "spam")
+                      "wfover", "wfremove", "wfinternet", "wforder", "wfmail", 
+                      "wfreceive", "wfwill", "wfpeople", "wfreport", "wfaddresses", 
+                      "wffree", "wfbusiness", "wfemail", "wfyou", "wfcredit", "wfyour", 
+                      "wffont", "wf000", "wfmoney", "wfhp", "wfhpl", "wfgeorge", "wf650", 
+                      "wflab", "wflabs", "wftelnet", "wf857", "wfdata", "wf415", "wf85", 
+                      "wftechnology", "wf1999", "wfparts", "wfpm", "wfdirect", "wfcs", 
+                      "wfmeeting", "wforiginal", "wfproject", "wfre", "wfedu", "wftable", 
+                      "wfconference", "cfsc", "cfpar", "cfbrack", "cfexc", "cfdollar", 
+                      "cfpound", "crlaverage", "crllongest", "crltotal", "spam")
 spam.test$spam<-as.factor(spam.test$spam)      
 
 

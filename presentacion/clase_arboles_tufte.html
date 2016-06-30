@@ -12,7 +12,7 @@
 
 <meta name="author" content="Kael Huerta, Enrique Bonilla" />
 
-<meta name="date" content="2016-06-24" />
+<meta name="date" content="2016-06-30" />
 
 <title>Árboles de Clasificación</title>
 
@@ -43,7 +43,7 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <h1 class="title toc-ignore">Árboles de Clasificación</h1>
 <h3 class="subtitle"><em>Introducción al Aprendizaje Estadístico</em></h3>
 <h4 class="author"><em>Kael Huerta, Enrique Bonilla</em></h4>
-<h4 class="date"><em>2016-06-24</em></h4>
+<h4 class="date"><em>2016-06-30</em></h4>
 
 
 
@@ -51,15 +51,16 @@ if (window.hljs && document.readyState && document.readyState === "complete") {
 <div id="nota-los-paquetes-que-se-utilizaran-en-estas-notas-son-los-siguientes" class="section level3">
 <h3>Nota: los paquetes que se utilizaran en estas notas son los siguientes:</h3>
 <pre class="r"><code>require(ggplot2)
+require(ggdendro)
 require(plyr)
 require(dplyr)
 require(tidyr)
-require(rpart)
-require(randomForest)
-require(gbm)
 require(kknn)
-require(partykit)
-require(reshape2)</code></pre>
+require(rpart)
+require(tree)
+require(mlbench)
+require(randomForest)
+require(gbm)</code></pre>
 </div>
 <div id="introduccion" class="section level1">
 <h1>Introducción</h1>
@@ -97,6 +98,7 @@ Problema de regresión.
 </div>
 <pre class="r"><code>#Método: regresión lineal
 #Datos: flores de Fisher
+#Librerias: base
 
 datos &lt;- iris %&gt;% 
   filter(Species %in% c(&quot;setosa&quot;, &quot;versicolor&quot;) ) %&gt;% 
@@ -128,6 +130,7 @@ Problema de clasificación.
 </ul>
 <pre class="r"><code>#Método: k-medias
 #Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
+#Librerias: base
 
 modelo &lt;- kmeans(faithful, 2)
 
@@ -199,7 +202,8 @@ Problema de agrupamiento.
 </ul>
 <p>Este comportamiento se encuentra, generalmente, independientemente de la función de pérdida y del tipo de problema. Por lo general, <span class="math">\(E_{rr\gamma}\)</span> tiene un comportamiento con la misma estructura que <span class="math">\(E_{rr}\)</span> pero no igual.</p>
 <pre class="r"><code>#Método: k vecinos más cercanos
-#Datos: Munich Rent Standards (library(kknn))
+#Datos: Munich Rent Standards 
+#Librerias: kknn
 
 data(miete)
 

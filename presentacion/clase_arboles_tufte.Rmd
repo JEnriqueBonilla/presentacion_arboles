@@ -35,15 +35,16 @@ options(htmltools.dir.version = FALSE)
 ### Nota: los paquetes que se utilizaran en estas notas son los siguientes:
 ```{r,echo = T, warning = F, message = F,error = F}
 require(ggplot2)
+require(ggdendro)
 require(plyr)
 require(dplyr)
 require(tidyr)
+require(kknn)
 require(rpart)
+require(tree)
+require(mlbench)
 require(randomForest)
 require(gbm)
-require(kknn)
-require(partykit)
-require(reshape2)
 ```
 
 
@@ -97,6 +98,7 @@ faithful %>% ggplot(aes(x = eruptions, y = waiting)) +
 
 #Método: regresión lineal
 #Datos: flores de Fisher
+#Librerias: base
 
 datos <- iris %>% 
   filter(Species %in% c("setosa", "versicolor") ) %>% 
@@ -128,6 +130,7 @@ Se trata de encontrar estructuras intrínsecas en los datos.
  
 #Método: k-medias
 #Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
+#Librerias: base
 
 modelo <- kmeans(faithful, 2)
 
@@ -313,13 +316,14 @@ $E_{rr}$ pero no igual.
 ```{r , fig.cap = "Varianza-Sesgo: entrenamiento vs prueba.", cache = F}
  
 #Método: k vecinos más cercanos
-#Datos: Munich Rent Standards (library(kknn))
+#Datos: Munich Rent Standards 
+#Librerias: kknn
 
 data(miete)
 
-tamano <- floor(0.50 * nrow(miete))
+tamano <- floor(0.65 * nrow(miete))
 
-set.seed(15)
+set.seed(203040)
 
 entrena_ind <- sample(seq_len(nrow(miete)), 
                       size = tamano)
