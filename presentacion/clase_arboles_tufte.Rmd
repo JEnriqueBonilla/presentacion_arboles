@@ -26,7 +26,7 @@ nocite: |
 
 ```{r setup, include = F}
 library(tufte)
-# invalidate cache when the tufte version changes
+## invalidate cache when the tufte version changes
 knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
 options(htmltools.dir.version = FALSE)
 ```
@@ -92,6 +92,7 @@ Se trata de encontrar estructuras intrínsecas en los datos.
 
 ## Método: regresión lineal
 ## Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
+## Librerias: base
  
 faithful %>%
   ggplot(aes(x = eruptions, y = waiting)) + 
@@ -236,37 +237,38 @@ comporta la predicción de nuestro modelo $\hat{f}(X)$, si no
 que, además, sabemos como se va a comportar al ser entrenado
 con el conjunto de entrenamiento $\Gamma$ que poseemos. Sin embargo, 
 parece que no es posible estimar este error condicional de forma 
-efectiva solo con el conjunto de entrenamiento.
-<!-- Explicar brevemente por qué -->
+efectiva **_sólo con el conjunto de entrenamiento_**. Se
+necesitarían datos independientes a esta muestra para hacerlo.
+
 
 Lo que se puede hacer es estimar el 
 *error de predicción esperado* o *error de prueba esperado*^[
-$E_{rr}=E_\gamma[E_{X,Y}[L(Y,\hat{F}(C)) \mid \gamma]]$
+$E_{rr}=E_\gamma[E_{X,Y}[L(Y,\hat{F}(X)) \mid \gamma]]$
 ]
 $$E[L(Y,\hat{f}(X))] = E_{rr} = E[E_{rr\gamma}]$$
 y usarlo para comparar y seleccionar modelos.
 Este valor es más amable al análisis estadístico además
 de que puede ser estimado con sólo el uso de la muestra
 de entrenamiento.
-<!-- Con la muestra de entrenamiento no, con la de prueba ¿o no?.
-Según yo con un subconjunto de los datos observados -->
+
+<!-- El error de predicción esperado puede ser
+estimado con la muestra de entrenamiento con el uso
+de validación cruzada. La muestra de prueba se usa para estimar
+el error de predicción (el que está condicionado a gamma)-->
 
 El error de predicción esperado puede ser aproximado analíticamente
 por métodos *in-sample* (AIC, DIC, MDL o SRR)^[En 
-realidad, algunos de métodos estiman $E_y[E_{inn}]$. Para más 
+realidad, algunos de estos métodos estiman $E_y[E_{inn}]$. Para más 
 información ver la sección 7.4 de @friedman2001elements .] 
 o por métodos de reuso de muestras (validación cruzada, *bootstrap*).
-<!-- ¿Por qué aparece una subnota a la subnota? -->
 
 
 Si tenemos muchos datos, lo mejor que podemos hacer es dividir
 la muestra observada en 3 conjuntos ajenos:
 
 - **Conjunto de entrenamiento**: se usa para entrenar el modelo 
-(puede sobre-ajustar). Se recomienda, empíricamente, $50\%$ de
-la muestra.
-<!-- Yo te diría que de 50% a 80% dependiendo de la cantidad de datos
-Aunque eso puede ser una nota-->
+(puede sobre-ajustar). Se recomienda, empíricamente $50\%$ 
+de la muestra, dependiendo de su tamaño. 
 
 - **Conjunto de prueba**: se usa para seleccionar modelos 
 (aún si estima $E_{rr\gamma}$, se puede sobre-ajustar). 
@@ -276,28 +278,16 @@ la muestra.
 - **Conjunto de validación**: se utiliza para aproximar $E_{rr\gamma}$
 de nuestro modelo final. Se recomienda, empíricamente, $25\%$ de
 la muestra y sólo debe ser utilizado al final para calcular el error. 
-**No** debe formar parte del proceso de selección de modelos (puede
-sobre-ajustar).
-<!-- Además de sobreajuste, estarías dando una sub-estimación del valor
-real de error -->
+**No** debe formar parte del proceso de selección de modelos (podría 
+sobre-ajustar y estaría dando una sub-estimación del error de predicción real).
 
-<!-- VER COMENTARIO SIGUIENTE: La nota según yo podría ser algo así:
-
-[Cuando se cuenta con una muestra de datos observados muy
-pequeña se puede utilizar hasta 80% para entramiento y prueba con validación
-cruzada y validación el 20% restante]
-
-Pero no la agregué porque creo que no mencionas validación cruzada, entonces
-tómalo como sugerencia únicamente -->
 
 Si tenemos un menor tamaño de muestra, ésta se separa sólo en
-conjuntos ajenos de entrenamiento y validación. Con el conjunto
-de entrenamiento estimamos $E_{rr}$ (por medio de métodos de
+conjuntos ajenos de entrenamiento ($80\%$) y validación ($20\%$). 
+Con el conjunto de entrenamiento estimamos $E_{rr}$ (por medio de métodos de
 reuso de muestra o *in-sample*) y comparamos / seleccionamos modelos.
 Con el conjunto de validación estimamos $E_{rr\gamma}$ del modelo final. 
 
-<!-- Olvida mi nota anterior, con esto basta. Quizá añadiría el dividir en 80%
-y 20% o algo por el estilo -->
 
 ## Descomposición en varianza-sesgo
 
@@ -328,8 +318,11 @@ de la función de pérdida y del tipo de problema. Por lo general,
 $E_{rr\gamma}$ tiene un comportamiento con la misma estructura que 
 $E_{rr}$ pero no igual.
 
-<!-- Valdría la pena hablar un poco más del "trade-off" entre complejidad y
-sesgo -->
+Esta descomposición nos muestra cómo, para minimizar el error de
+predicción, es conveniente encontrar un equilibrio entre sesgo
+y varianza: seleccionar un modelo suficientemente complejo para
+que capture la estructura de los datos pero no tan complejo
+para capturar ruido.
 
 
 ```{r , fig.cap = "Varianza-Sesgo: entrenamiento vs prueba.", cache = F}
