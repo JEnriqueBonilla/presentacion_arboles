@@ -47,19 +47,23 @@ require(randomForest)
 require(gbm)
 ```
 
+```{r, echo = F}
+## Cambiando el tema de las gráficas
+theme_set(theme_bw())
+```
 
 # Introducción 
 
 
-##  Aprendizaje Estadístico
+## Aprendizaje Estadístico
 
-En el mundo del análisis de datos, existen 2 formas de concebir el 
+En el mundo del análisis de datos existen 2 formas de concebir el 
 modelado estadístico:
     
 - **Data modeling culture**: su objetivo es el diagnóstico.
 Fuerte en teoría y utiliza pocos datos.
 
-- **Alogiritmic modeling culture**: su finalidad es predecir
+- **Algorithmic modeling culture**: su finalidad es predecir
 futuras observaciones. Aunque no se ha desarrollado
 mucha teoría matemática, se desempeña muy bien ante 
 grandes cantidades de datos.
@@ -68,74 +72,66 @@ Cada uno de estos enfoques es útil en distintas situaciones.
 En particular, el Aprendizaje Estadístico utiliza el segundo enfoque. 
     
 Algunos términos relacionados que son frecuentemente mencionados en
-la literatura son los siguientes
+la literatura son los siguientes:
 
-- **Aprendizaje de Máquina**: análisis de algoritmos;
-- **Minería de Datos**: bases de datos grandes;
+- **Aprendizaje de Máquina**: análisis de algoritmos.
+- **Minería de Datos**: bases de datos grandes.
 - **Aprendizaje estadístico**: teoría estadística detrás de
 las últimas dos.
 
 El aprendizaje estadístico se divide en dos principales ramas:
    
-- **Aprendizaje Supervisado**: predecir variable dada $Y$ 
-    (conocemos respuesta). Si la variable respuesta es
-    cuantitativa, se conoce como problema de *regresión*. 
+- **Aprendizaje Supervisado**: predecir la variable dada $Y$ 
+    (conocemos la respuesta). Si la variable de respuesta es
+    cuantitativa se conoce como problema de *regresión*. 
     Si es cualitativa, se denomina problema de *clasificación*.
+- **Aprendizaje No Supervisado**: no hay variable respuesta.
+Se trata de encontrar estructuras intrínsecas en los datos.
 
+```{r fig-two-separate, fig.cap=sprintf("Aprendizaje supervisado. Problema de %s.", c("regresión", "clasificación")), cache = F}
 
-
-
-```{r fig-two-separate, fig.cap=sprintf("Problema de %s.", c("regresión", "clasificación")), cache = F}
-
-#Método: regresión lineal
-#Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
+## Método: regresión lineal
+## Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
  
-faithful %>% ggplot(aes(x = eruptions, y = waiting)) + 
-  geom_point() +
-  geom_smooth(method='lm') +
-  xlab("Duración de erupción (min.)") + 
-  ylab("Tiempo de espera para siguiente erupción (min.)")
+faithful %>%
+  ggplot(aes(x = eruptions, y = waiting)) + 
+    geom_point() +
+    geom_smooth(method='lm') +
+    xlab("Duración de erupción (min.)") + 
+    ylab("Tiempo de espera para siguiente erupción (min.)")
 
-#Método: regresión lineal
-#Datos: flores de Fisher
-#Librerias: base
+## Método: regresión lineal
+## Datos: flores de Fisher
+## Librerias: base
 
 datos <- iris %>% 
   filter(Species %in% c("setosa", "versicolor") ) %>% 
-  mutate(specie = ifelse(Species== "setosa", 0, 1)) %>% 
-  mutate(specie = as.numeric(specie))
+  mutate(specie = as.numeric(ifelse(Species== "setosa", 0, 1)))
   
 modelo <- datos %>% 
   lm(formula = "specie ~ Sepal.Length + Sepal.Width")
 
-# Si y > .5 entonces se clasifica 1
+## Si y > .5 entonces se clasifica 1
 
- datos %>% 
-   ggplot(aes(x = Sepal.Length, y = Sepal.Width, 
-              colour = Species)) +
-   geom_point() + 
-   geom_abline(intercept = -1.28, slope = .79)  + 
-   annotate("text", x = 6, y = 4, 
-            label = ".50 = -.28 + .47x1 - .59x2") + 
-   xlab("Longitud del sépalo") + 
-   ylab("Anchura del sépalo")
-
-
+datos %>%
+  ggplot(aes(x = Sepal.Length, y = Sepal.Width, colour = Species)) +
+    geom_point() + 
+    geom_abline(intercept = -1.28, slope = .79)  + 
+    annotate("text", x = 6, y = 4, label = ".50 = -.28 + .47x1 - .59x2") +
+    xlab("Longitud del sépalo") +
+    ylab("Anchura del sépalo")
 ```
 
-- **Aprendizaje No Supervisado**: no hay variable respuesta.
-Se trata de encontrar estructuras intrínsecas en los datos.
 
-```{r fig-main, fig.cap = "Problema de agrupamiento.", cache = F}
+```{r fig-main, fig.cap = "Aprendizaje no supervisado. Problema de agrupamiento.", cache = F}
  
-#Método: k-medias
-#Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
-#Librerias: base
+## Método: k-medias
+## Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
+## Librerias: base
 
 modelo <- kmeans(faithful, 2)
 
-datos <- data.frame(faithful, 
-                   grupo = as.character(modelo$cluster))
+datos <- data.frame(faithful, grupo = as.character(modelo$cluster))
 
 datos %>% 
   ggplot(aes(x = eruptions, y = waiting, color = grupo)) + 
@@ -152,11 +148,11 @@ categórica ($G$).
 ## Supuestos y notación
 
 Se define a $X = (X_1, \ldots, X_p)$ como la variable de entrada 
-y a $Y$ como la variable respuesta, cuantitativa ($G$ cualitativa).
-Se asume que $X,Y$ están relacionadas a través de un modelo 
-probabilístico $P(X,Y)$ donde $P(X,Y)$ es su distribución de 
+y a $Y$ como la variable de respuesta cuantitativa, $G$ en caso de ser
+cualitativa. Se asume que $X$ y $Y$ están relacionadas a través de un modelo
+probabilístico $P(X,Y)$ donde $P(X,Y)$ es su distribución de
 probabilidad conjunta. Por lo general, $P(X,Y)$ es un objeto
-complicado que no conocemos y difícil de estimar. 
+complicado que no conocemos y es difícil de estimar.
 
 En el caso de regresión, suponemos que se puede escribir $Y = f(X) + \epsilon$
 donde $E[\epsilon] = 0$ y es independiente de X.^[La idea es que 
@@ -167,13 +163,13 @@ se puede suponer que $Y = f(X)$ o que los errores no son independientes
 e idénticamente distribuidos.] Nuestro objetivo es estimar $f(X)$
 por medio de una aproximación $\hat{f}$ usando los datos observados.
 ^[Típicamente, la $f$ estimada depende de un parámetro
-o conjunto de parámetros de complejidad $\alpha$, i.e, $\hat{f}_{\alpha}$. ]
+o conjunto de parámetros de **complejidad** $\alpha$, i.e, $\hat{f}_{\alpha}$.]
 
 Cuando se trata del problema de clasificación, nuestro objetivo es 
 estimar $P(G \mid X)$ y esto se modela directamente. 
 
 Para construir la regla de predicción ($\hat{f}$ o $\hat{P}$ 
-dependiendo el caso), usamos datos observados. 
+dependiendo el caso) usamos datos observados. 
 Al conjunto de datos observados $\Gamma  = \{(x_1, y_1), \ldots, (x_n, y_n)\}$ 
 con los que se evalúa el modelo se le conoce como
 *conjunto de entrenamiento*. 
@@ -194,11 +190,11 @@ $$\begin{equation*}
 \begin{aligned}
 & \underset{f}{\text{min}}
 & & E[L(Y_0,\hat{f}(X_0)] \\
-& \text{S.a.} & & f\in F \\
+& \text{s.a.} & & f\in F \\
 & & & X_0,Y_0 \in P(X,Y)
 \end{aligned}
 \end{equation*}$$ 
-En la práctica, realmente nos interesa minimizar el error de predicción
+En la práctica, esto se traduce a minimizar el error de predicción
 de nuestro modelo condicionado a los datos de entrenamiento.
 
 
@@ -235,12 +231,13 @@ que $(X,Y)$ son elementos de $P(X,Y)$ no de $\Gamma$
 necesariamente.] 
 
 Como se mencionó anteriormente, estimar $E_{rr\gamma}$ 
-es nuestro principal objetivo pues no revela no sólo como se 
+es nuestro principal objetivo pues nos revela no sólo como se 
 comporta la predicción de nuestro modelo $\hat{f}(X)$, si no
 que, además, sabemos como se va a comportar al ser entrenado
 con el conjunto de entrenamiento $\Gamma$ que poseemos. Sin embargo, 
 parece que no es posible estimar este error condicional de forma 
-efectiva solo con el conjunto de entrenamiento. 
+efectiva solo con el conjunto de entrenamiento.
+<!-- Explicar brevemente por qué -->
 
 Lo que se puede hacer es estimar el 
 *error de predicción esperado* o *error de prueba esperado*^[
@@ -250,13 +247,16 @@ $$E[L(Y,\hat{f}(X))] = E_{rr} = E[E_{rr\gamma}]$$
 y usarlo para comparar y seleccionar modelos.
 Este valor es más amable al análisis estadístico además
 de que puede ser estimado con sólo el uso de la muestra
-de entrenamiento. 
+de entrenamiento.
+<!-- Con la muestra de entrenamiento no, con la de prueba ¿o no?.
+Según yo con un subconjunto de los datos observados -->
 
 El error de predicción esperado puede ser aproximado analíticamente
 por métodos *in-sample* (AIC, DIC, MDL o SRR)^[En 
 realidad, algunos de métodos estiman $E_y[E_{inn}]$. Para más 
 información ver la sección 7.4 de @friedman2001elements .] 
-o por métodos de reuso de muestras (validación cruzada, boostrap).
+o por métodos de reuso de muestras (validación cruzada, *bootstrap*).
+<!-- ¿Por qué aparece una subnota a la subnota? -->
 
 
 Si tenemos muchos datos, lo mejor que podemos hacer es dividir
@@ -265,6 +265,8 @@ la muestra observada en 3 conjuntos ajenos:
 - **Conjunto de entrenamiento**: se usa para entrenar el modelo 
 (puede sobre-ajustar). Se recomienda, empíricamente, $50\%$ de
 la muestra.
+<!-- Yo te diría que de 50% a 80% dependiendo de la cantidad de datos
+Aunque eso puede ser una nota-->
 
 - **Conjunto de prueba**: se usa para seleccionar modelos 
 (aún si estima $E_{rr\gamma}$, se puede sobre-ajustar). 
@@ -276,19 +278,32 @@ de nuestro modelo final. Se recomienda, empíricamente, $25\%$ de
 la muestra y sólo debe ser utilizado al final para calcular el error. 
 **No** debe formar parte del proceso de selección de modelos (puede
 sobre-ajustar).
+<!-- Además de sobreajuste, estarías dando una sub-estimación del valor
+real de error -->
 
-Si tenemos un menor tamaño de muestra, esta se separa sólo en
+<!-- VER COMENTARIO SIGUIENTE: La nota según yo podría ser algo así:
+
+[Cuando se cuenta con una muestra de datos observados muy
+pequeña se puede utilizar hasta 80% para entramiento y prueba con validación
+cruzada y validación el 20% restante]
+
+Pero no la agregué porque creo que no mencionas validación cruzada, entonces
+tómalo como sugerencia únicamente -->
+
+Si tenemos un menor tamaño de muestra, ésta se separa sólo en
 conjuntos ajenos de entrenamiento y validación. Con el conjunto
 de entrenamiento estimamos $E_{rr}$ (por medio de métodos de
-reuso de muesta o in-sample) y comparamos-seleccionamos modelos.
+reuso de muestra o *in-sample*) y comparamos / seleccionamos modelos.
 Con el conjunto de validación estimamos $E_{rr\gamma}$ del modelo final. 
 
+<!-- Olvida mi nota anterior, con esto basta. Quizá añadiría el dividir en 80%
+y 20% o algo por el estilo -->
 
 ## Descomposición en varianza-sesgo
 
 Si asumimos que estamos en el caso de regresión 
 ($Y = F(X) + \epsilon$, $E[\epsilon]=0$, $Var(\epsilon)= \sigma_\epsilon^2$)
-y usamos la pérdida cuadrática se puede demostrar que ^ [Por simplicidad,
+y usamos la pérdida cuadrática se puede demostrar que ^[Por simplicidad,
 supondremos que sólo nos interesa hacer predicción para $X = x_0$]
 $$E_{rr}(x_0) = \sigma_\epsilon^2 + sesgo_\gamma^2(x_0) + Var_\gamma(x_0)$$
 
@@ -300,24 +315,28 @@ No depende del ajuste, es aleatoriedad del fenómeno.
 - $sesgo_\gamma^2(x_0) = (E[Y \mid X = x_0] -E_\gamma[\hat{f}_\gamma(x_0)])^2$ 
 es el sesgo del método. Mide en promedio cuanto se desvía 
 $\hat{f}_\gamma(x_o)$ del óptimo $E[y \mid X = x_0]$. Entre menos complejo sea
-el método aumenta el sesgo y, por lo ranto, aumenta el error.
+el método aumenta el sesgo y, por lo tanto, aumenta el error.
 
 - $Var_\gamma(x_0) = E_\gamma[(\hat{f}_\gamma(x_0)-E_\gamma[\hat{f}_\gamma(x_0)])^2]$
-es la varianza del método. mide qué tanto varian las predicciones
+es la varianza del método. mide qué tanto varían las predicciones
 entre muestras de entrenamiento. Un método muy complejo es
 un método inestable en el que las predicciones varían mucho
 entres muestras de entrenamiento. 
 
-Este comportamiento se encuentra, generalmente, independientemente 
+Esta descomposición se encuentra, generalmente, independientemente 
 de la función de pérdida y del tipo de problema. Por lo general,
 $E_{rr\gamma}$ tiene un comportamiento con la misma estructura que 
 $E_{rr}$ pero no igual.
 
+<!-- Valdría la pena hablar un poco más del "trade-off" entre complejidad y
+sesgo -->
+
+
 ```{r , fig.cap = "Varianza-Sesgo: entrenamiento vs prueba.", cache = F}
  
-#Método: k vecinos más cercanos
-#Datos: Munich Rent Standards 
-#Librerias: kknn
+## Método: k vecinos más cercanos
+## Datos: Munich Rent Standards 
+## Librerias: kknn
 
 data(miete)
 
@@ -369,9 +388,9 @@ err.m %>%
   ylab("Error")
 ```
 
-#Árboles de clasificación
+# Árboles de clasificación
 
-#Referencias
+# Referencias
 
 
 
