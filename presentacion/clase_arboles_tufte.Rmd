@@ -1,5 +1,5 @@
 ---
-title: "Árboles de Clasificación"
+title: "Árboles de Clasificación y regresión"
 subtitle: "Introducción al Aprendizaje Estadístico"
 author: "Kael Huerta, Enrique Bonilla"
 date: "`r Sys.Date()`"
@@ -381,7 +381,71 @@ err.m %>%
   ylab("Error")
 ```
 
-# Árboles de clasificación
+# Árboles de clasificación y regresión
+
+Los modelos basados en árboles son herramientas poderosas
+para la predicción. Estos van particionando, recursivamente, 
+el espacio de las covariables (feature space) en rectángulos 
+por medio de modelos simples, cómo constantes. En esta 
+sección, nos enfocaremos en el enfoque *CART*^[@breiman1984classification]. Aunque este 
+tipo de árboles, por si solos, son fácilmente superados 
+en la predicción, construyen la base de técnicas muy poderosas 
+como bosques aleatorios. 
+
+Para simplificar, aunque posteriormente veremos que en realidad
+este enfoque es el más conveniente, CART hace 
+particiones binarias. Primero, se parte el espacio en dos regiones
+seleccionando la covariable y el corte que ajuste mejor; después,
+una o ambas de estas regiones se particionan en otras dos de la misma
+manera y así sucesivamente. Los nodos terminales representan la partición
+obtenida. 
+
+Esta forma de particionar el espacio nos permite representar el modelo
+gráficamente por medio de un árbol binario, lo que lo hace un modelo fácil
+de interpretar. Además, como se puede ver en los árboles binarios, este modelo
+permite capturar interaccciones. 
+
+
+```{r , fig.cap=sprintf("Árbol de clasificación. Representación %s.", c("espacial", "en árbol binario")), cache = F}
+
+## Método: CART
+## Datos: flores de Fisher
+## Librerias: tree, rpart, ggdendro
+ 
+## Modelos
+control.completo <- rpart.control(cp=0, minsplit=10,
+                                minbucket=1, xval=10, maxdepth=30)
+
+arbol1 <- tree(Species ~ Sepal.Width + Petal.Width, data = iris)
+arbol2 <- rpart(Species ~ Sepal.Width + Petal.Width, method = "class", 
+               data = iris, control = control.completo)
+
+## Particion del feature space
+plot(iris$Petal.Width, iris$Sepal.Width, pch=19,col=as.numeric(iris$Species))
+partition.tree(arbol1, label="Species", add = T)
+legend(1.75,4.5,legend=unique(iris$Species),col=unique(as.numeric(iris$Species)),pch=19)
+
+## Dendograma
+ddata <- dendro_data(arbol2, uniform =T)
+
+ggplot() + 
+  geom_segment(data = ddata$segments, 
+               aes(x = x, y = y, xend = xend, yend = yend), colour = "brown", size = 1) + 
+  geom_text(data = ddata$labels, 
+            aes(x = x, y = y, label = label), colour = "#006633", size = 3, vjust = -1) +
+  geom_text(data = ddata$leaf_labels, 
+            aes(x = x, y = y, label = label), colour = "#006633", size = 4, vjust = 1) +
+  theme_dendro() 
+
+```
+
+Ahora queda por responder las siguientes pregutas: ¿Cómo hacer las 
+particiones? ¿Cómo predecir en los nodos terminales? ¿Cómo declarar
+un nodo terminal?
+
+## Problema de regresión
+
+
 
 # Referencias
 

@@ -116,3 +116,32 @@ ggplot() +
 
 #error de prueba
 mean((predict(modelo.arb.final, prueba.arb)- prueba.arb$medv)^2)
+
+
+
+###################### ejemplo funciones clasificación
+
+gini <- function(p){
+  f <- 1-p^2 -(1-p)^2
+  return(f)
+}
+
+entropia <- function(p){
+  f <- -p*log2(p) - (1-p)*log2(1-p)
+  f <- f/2
+  return(f)
+  }
+
+clasificacion <- function(p){
+  f <- 1-pmax(p,(1-p))
+  return(f)
+}
+
+datos <- data.frame(x = seq(0.001, .999, length =300 )) %>%  
+  mutate(gini = gini(x), entropia_escalada = entropia(x), 
+         clasificacion = clasificacion(x)) %>% 
+  gather(variable, valor, -x)
+
+datos %>% ggplot(aes(x = x, y = valor, group = variable, color = variable)) +
+  geom_line() + ylab("y")
+
