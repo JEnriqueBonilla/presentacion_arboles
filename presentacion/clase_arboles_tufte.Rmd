@@ -678,7 +678,9 @@ categóricas, ver @breiman1984classification o @friedman2001elements )
 ```{r , fig.cap = c("Árbol completo", "Error de validación cruzada (x-val)", "Error de prueba vs error de entrenamiento", "Árbol podado"), cache = F}
 
 ## Método: CART (regresión)
-## Datos: Boston Housing (librería mlbench)
+## Datos: Boston Housing (librería mlbench):
+## Housing data for 506 census tracts of Boston from the 1970 census
+## medv =	median value of owner-occupied homes in USD 1000's
 ## Librerias: rpart, ggdendro
  
 data(BostonHousing)
