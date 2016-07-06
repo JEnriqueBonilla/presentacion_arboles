@@ -385,10 +385,10 @@ err.m %>%
 
 Los modelos basados en árboles son herramientas poderosas
 para la predicción. Estos van particionando, recursivamente, 
-el espacio de las covariables (feature space) en rectángulos 
+el espacio de covariables (feature space) en rectángulos 
 por medio de modelos simples, cómo constantes. En esta 
-sección, nos enfocaremos en el enfoque *CART*^[@breiman1984classification]. Aunque este 
-tipo de árboles, por si solos, son fácilmente superados 
+sección, nos enfocaremos en el enfoque *CART*^[@breiman1984classification]. 
+Aunque este tipo de árboles, por si solos, son fácilmente superados 
 en la predicción, construyen la base de técnicas muy poderosas 
 como bosques aleatorios. 
 
@@ -397,13 +397,15 @@ este enfoque es el más conveniente, CART hace
 particiones binarias. Primero, se parte el espacio en dos regiones
 seleccionando la covariable y el corte que ajuste mejor; después,
 una o ambas de estas regiones se particionan en otras dos de la misma
-manera y así sucesivamente. Los nodos terminales representan la partición
-obtenida. 
+manera y así sucesivamente. 
 
 Esta forma de particionar el espacio nos permite representar el modelo
 gráficamente por medio de un árbol binario, lo que lo hace un modelo fácil
-de interpretar. Además, como se puede ver en los árboles binarios, este modelo
-permite capturar interaccciones. 
+de interpretar: los nodos intermedios pueden entenderse como decisiones que
+dependen de las covaraibles del modelo, los nodos terminales representan 
+la partición final obtenida. En cada uno de los nodos terminales se elige, 
+según algún criterio, un número o clase de predicción. Cómo se puede ver 
+en los árboles binarios, este modelo permite capturar interacciones. 
 
 
 ```{r , fig.cap=sprintf("Árbol de clasificación. Representación %s.", c("espacial", "en árbol binario")), cache = F}
@@ -439,13 +441,330 @@ ggplot() +
 
 ```
 
-Ahora queda por responder las siguientes pregutas: ¿Cómo hacer las 
+Ahora queda por responder las siguientes preguntas: ¿Cómo elegir las 
 particiones? ¿Cómo predecir en los nodos terminales? ¿Cómo declarar
 un nodo terminal?
 
 ## Problema de regresión
 
+Para este problema, supondremos que nuestros datos consisten 
+de $p$ covariables, una variable respuesta cualitativa y $N$ 
+observaciones, es decir, $(x_i,y_i)$ para $i=1, \ldots, N$ con 
+$x_i = (x_{i1}, \ldots, x_{ip})$. 
 
+Para construir nuestro árbol, recursivamente iremos dividiendo
+cada nodo que se vaya generando con ayuda de las covariables del modelo 
+$(X_1, \ldots, X_p)$. Se escogerá entre  particiones tales que
+
+$$R_1(j,z) = \{X \mid X_j \leq z\} \quad \text{y} \quad R_2(j,z) = \{X \mid X_j > z\} \quad \text{si $X_j$ es continua}$$
+
+$$R_1(j,s) = \{X \mid X_j \in s\} \quad \text{y} \quad R_2(j,s) = \{X \mid X_j \in s^c\} \quad \text{si $X_j$ es categórica}$$
+
+
+Ahora bien, uno podría pensar que nuestro objetivo es dividir nuestro
+espacio de covariables en las  regiones $R_1, \ldots, R_M$^[nodos terminales] 
+tal que minimicen óptimamente 
+$$\sum\limits_{i=1}^N (y_i - \sum\limits_{m=1}^M c_mI(x_i\in R_m))^2$$
+con $c_m = promedio(y_i \mid x_i \in R_m)$. Sin embargo, este problema
+no es computacionalmente factible. Lo que haremos es usar un algoritmo
+codicioso para generar nuestro árbol, en otras palabras, las particiones
+se escogerán de manera miope o local intentado separar las clases de 
+un nodo lo mejor que se pueda.
+
+Lo que se hace es, para cada nodo que vaya generando nuestro árbol,
+encontrar la variable $j$ y el valor $z$ tal que^[Para simplificar la notación, supondremos que todas nuestras covariables son continuas.] 
+
+$$\underset{j,z}{\text{min}}  \sum_{x_i \in R_1(j,z)}(y_i-c_1)^2 + \sum_{x_i \in R_2(j,z)}(y_i-c_2)^2 $$
+
+Este proceso se repite hasta construir el árbol más grande que podamos 
+tener.^[Mediante este algoritmo, no obtenemos la respuesta óptima pues
+necesitaríamos "equivocarnos" para encontrarla.] Después nos encargaremos 
+de *podarlo* para tener un mejor árbol predictor.
+
+Se define la *impureza* de un nodo $t$ de un árbol $T$, para el problema 
+de regresión, como $$i(t) = \frac{1}{N_t}\sum_{x_i \in R_t}(y_i-c_t)^2$$  y la
+*impureza del árbol* como $$i(T) = \sum_{t \in T}q(t)i(t)$$ con $q(t) = N_t$.
+Se puede ver que nuestro algoritmo miope se puede traducir a 
+$$\underset{t -> t_1\cup t_2}{\text{min}} N_{t_1}i(t_1) + N_{t_2}i(t_2)$$
+para todos los nodos que se vayan generando con la finalidad de disminuir 
+la impureza del árbol lo más que se pueda. 
+
+Una vez construido el árbol, para un valor $x_i$, $x_i \in R_m$
+se predice el valor $c_m$.
+
+## Problema de clasificación
+
+Para el problema de clasificación, se pueden utilizar varias 
+medidas de impureza. Estás usan las proporciones de casos 
+en un nodo $t$ que caen en cada categoría $(p_1(t), \ldots, p_K(t))$ 
+para dar una cuantificación de su impureza. 
+
+Las más populares son las siguientes:
+
+- **Entropía**: mide la revoltura o desorden de las clases,
+es parecida a la devianza.^[La teoría estipula logaritmo base 2,
+sin embargo, se puede usar cualquier base.]
+
+$$i(t) = - \sum\limits_{k=1}^Kp_k(t)log(p_k(t))$$
+
+- **Índice de Gini**: mide la "varianza" de las categorías,
+es suma de varianzas bernoulli (multinomial).
+
+$$i(t) = \sum\limits_{k=1}^Kp_k(t)(1-p_k(t)) = 1 -\sum\limits_{k=1}^Kp_k(t)^2$$
+
+- **Error de clasificación**: calcula el porcentaje
+de casos que clasificaste mal respecto a la categoría
+más frecuente en el nodo.
+
+$$i(t) = 1 - \underset{j}{\text{max}}(p_j(t))$$
+
+Cuando $K=2$ estás 3 medidas se comportan similarmente.
+Sin embargo, cuando $K > 2$ se recomienda usar, para
+crecer el árbol, Gini o Entropía debido a que contemplan
+lo que pasa a lo largo de todas las clases, no sólo la
+clase dominante.^[Por ejemplo si tenemos los nodos $(500,200,200)$
+y $(500,50,350)$ el error de clasificación es el mismo
+pero el segundo nodo es mejor porque separa mejor las clases.]
+
+```{r , fig.cap = "Comparación de medidas de impureza. K = 2.", cache = F}
+ 
+gini <- function(p){
+  f <- 1-p^2 -(1-p)^2
+  return(f)
+}
+
+entropia <- function(p){
+  f <- -p*log2(p) - (1-p)*log2(1-p)
+  f <- f/2
+  return(f)
+  }
+
+clasificacion <- function(p){
+  f <- 1-pmax(p,(1-p))
+  return(f)
+}
+
+datos <- data.frame(x = seq(0.001, .999, length =300 )) %>%  
+  mutate(gini = gini(x), entropia_escalada = entropia(x), 
+         clasificacion = clasificacion(x)) %>% 
+  gather(variable, valor, -x)
+
+datos %>% ggplot(aes(x = x, y = valor, group = variable, color = variable)) +
+  geom_line() + 
+  ylab("y")
+```
+
+Para el caso de clasificación, la impureza del árbol 
+está dada por 
+
+$$i(T) = \sum_{t \in T}q(t)i(t)$$ con $q(t) = \frac{N_t}{N}$.
+
+y nos interesa resolver en todos los nodos^[Se usa $\frac{N_{t_1}}{N_t}$ y $\frac{N_{t_1}}{N_t}$ para
+que sea un problema local.] 
+$$\underset{t -> t_1\cup t_2}{\text{min}} \frac{N_{t_1}}{N_t}i(t_1) + \frac{N_{t_2}}{N_t}i(t_2)$$
+ 
+
+Una vez construido el árbol, para un valor $x_i$, $x_i \in R_m$
+se predice con la categoría más frecuente en el nodo.
+
+## Costo-Complejidad
+
+Como se mencionó en la sección anterior, como primer paso para
+construir nuestro árbol final, el que utilizaremos para predecir,
+construiremos el árbol más grande posible $T_{max}$. Sin embargo, 
+este árbol va a tener varianza alta debido a que es un modelo muy 
+complejo y está sobre-ajustando, lo que nos llevaría a un gran error de 
+predicción.
+
+Lo que se puede hacer es pensar en un criterio de paro para el 
+tamaño del árbol. Una primera opción podría ser dividir un 
+nodo sólo si el decrecimiento en la impureza del árbol excede
+alguna cuota, pero con este criterio podríamos perder buenas 
+separaciones debajo de las separaciones malas.
+
+Una mejor estrategia es podar el árbol (*prunning*) mediante
+el *costo-complejidad*. Este consiste en sumarle a la impureza
+del árbol o el error de clasificación (dependiendo el caso) una
+penalización por el tamaño del árbol $\mid T \mid$ multiplicado
+por una constante fija $\alpha$, es decir,
+
+$$c_\alpha(T) = i(T) + \alpha\mid T \mid$$
+
+En un principio uno podría pensar en encontrar un árbol óptimo
+$T^*(\alpha)$ que minimice $c_\alpha(T)$ para toda $\alpha \geq 0$^[
+$\alpha$ más grande penaliza más fuerte el tamaño del árbol y lleva a 
+soluciones con árboles más chicos.] y hacer validación cruzada 
+para elegir el mejor parámetro, pero este es un problema demasiado 
+grande. 
+
+Para resolver este problema, se puede demostrar que para cada
+$\alpha$ existe un único árbol que minimiza el error de 
+costo-complejidad. Además, vale la pena observar que todas soluciones
+$T^*(\alpha)$ son sub-árboles del árbol más grande $T_{max}$ y que, a pesar
+de que existen un número infinito de $\alpha \geq 0$ sólo existe
+un número finito de sub-árboles. 
+
+@breiman1984classification demuestra que existe una sucesión anidada
+de árboles  $T_{max} \leq T_1 \leq T_2 \leq \ldots \leq T_{k+1}$  y una
+succión correspondiente $\alpha_0 \leq \alpha_1 \leq \ldots \leq \alpha_k$
+tal que $T^*(\alpha) = T_j$ si $\alpha_{j-1} \leq \alpha < \alpha_j$, es decir,
+no necesitamos explorar todas las combinaciones posibles de cortes del
+árbol más grande para encontrar una solución para una determinada $\alpha$ y, 
+además, no necesitamos encontrar el comportamiento de los árboles para todas 
+las  $\alpha \geq 0$, sólo nos basta encontrar el árbol óptimo para un número
+finito de $\alpha$ y estos árboles son sub-árboles del árbol óptimo generado
+por $\alpha$ más chica. 
+
+Una ves hecho esto encontramos cuál de estos árboles nos da el menor 
+error de predicción o de validación cruzada y ese lo elegimos como 
+el árbol final.
+
+Como nota final, el costo complejidad para problemas de clasificación
+está dado por 
+$$c_\alpha(T) = \bar{err} + \alpha\mid T \mid$$ 
+Aunque también se puede usar la impureza del árbol es más
+común que se use el error de clasificación calculado con
+la muestra de entrenamiento. 
+
+## Ventajas 
+
+- Son fáciles de interpretar.
+
+- Capturan interacciones entre las covariables.
+
+- No es necesario transformar variables.
+
+- Son robustos a valores atípicos ya que pueden crear un nodo 
+exclusivo para ese valor y las decisiones de clasificación 
+son muy generales.
+
+- Son robustos ante valores faltantes pues 1) pueden considerar
+el valor faltante, si la covariable es categórica, con una categoría
+más y ver que los individuos con valores faltantes se comportan
+distinto a los que si respondieron y 2) crean cortes sucedáneos
+buscando variables de entrada que más asemejen el corte encontrado.
+
+- Se ajustan rápidamente.
+
+- Usan cortes binarios para evitar que se acaben los datos en los nodos
+muy rápido. además de que cortes múltiples pueden ser recreados por
+una serie de varios cortes binarios.
+
+- Se pueden usar combinaciones lineales para separar un nodo, 
+pero se pierde interpretabilidad.
+
+## Desventajas
+
+- Difícilmente capturan estructuras lineales (regresión lineal).
+
+- En la interpretación, algunas covariables pueden enmascarar a otras.
+Una variable que no está en el árbol no quiere decir que no sea buena 
+(cortes sucedáneos, qué tan cerca estuvieron de ganar).
+
+- Son muy inestables ($Var_\gamma(T)$ es muy alta). Debido a que son 
+modelos jerárquicos, es muy fácil que con un pequeño cambio en la muestra 
+cambie radicalmente el árbol. Esto produce un desempeño predictor
+relativamente malo (para este punto, también conviene ver los cortes
+sucedáneos).
+
+- Cuando tienen como covariable una variable categórica con muchas 
+categorías el árbol sobre-ajusta muy rápido. Esto se debe a lo
+exhaustivo de la búsqueda (como se construyen los cortes de variables
+categóricas, ver @breiman1984classification o @friedman2001elements )
+
+## Ejemplo
+
+```{r , fig.cap = c("Árbol completo", "Error de validación cruzada (x-val)", "Error de prueba vs error de entrenamiento", "Árbol podado"), cache = F}
+
+## Método: CART (regresión)
+## Datos: Boston Housing (librería mlbench)
+## Librerias: rpart, ggdendro
+ 
+data(BostonHousing)
+set.seed(15)
+train <- sample(1:nrow(BostonHousing),400)
+BostonHousing$train <- F
+BostonHousing$train[train] <- T
+entrena.arb <- BostonHousing[BostonHousing$train,]
+prueba.arb <- BostonHousing[!BostonHousing$train,]
+entrena.arb$train <- NULL
+
+## Modelo completo
+modelo.arb.completo <- rpart(medv~., data = entrena.arb, method = "anova", 
+                       control=rpart.control(cp=0 , xval=10, minbucket=1))
+
+## Dendograma completo
+ddata <- dendro_data(modelo.arb.completo , uniform =T)
+
+ggplot() + 
+  geom_segment(data = ddata$segments, 
+               aes(x = x, y = y, xend = xend, yend = yend), colour = "brown", size = 1) + 
+  geom_text(data = ddata$labels, 
+            aes(x = x, y = y, label = label), colour = "#006633", size = 1, vjust = -1) +
+  geom_text(data = ddata$leaf_labels, 
+            aes(x = x, y = y, label = label), colour = "#006633", size = 1, vjust = 1) +
+  theme_dendro() + scale_y_reverse(expand = c(0.2, 0)) + coord_polar(theta="x")
+
+## Validación cruzada: cp = 15
+plotcp(modelo.arb.completo)
+
+error.completo <- modelo.arb.completo$cptable %>%
+  data.frame() %>% 
+  dplyr::select(nsplit, CP, xerror) 
+
+error.completo %>% head(40)
+
+alpha <- error.completo$CP
+
+## Prueba vs entrenamiento
+errores.vmc <- ldply(alpha, 
+                     function(i) {
+                       
+                      modelo <- rpart(medv~., data = entrena.arb, method = "anova", 
+                                                             control=rpart.control(cp=i , xval=10, minbucket=1))
+                      
+                      error.entrena <- mean((predict(modelo) - entrena.arb$medv)^2)
+                       
+                      error.prueba <- mean((predict(modelo, prueba.arb)- prueba.arb$medv)^2)
+                       
+                       data.frame(CP = as.numeric(i), prueba = error.prueba, 
+                                  entrenamiento = error.entrena)
+                     })
+
+errores.vmc %>% 
+  left_join(error.completo %>% 
+              dplyr::select(-xerror)) %>% 
+  gather(variable, valor, -CP, -nsplit) %>% 
+  ggplot(aes(x = nsplit, y = valor, 
+             colour = variable,
+             group = variable)) + 
+  geom_line() +
+  geom_vline(xintercept = 19) +
+  xlab("Altura del árbol") + 
+  ylab("Error")
+
+## Modelo podado
+
+modelo.arb.final <- rpart(medv~., data = entrena.arb, method = "anova", 
+                             control=rpart.control(cp=.0035 , xval=10, minbucket=1))
+
+## Dendograma podado
+
+ddata <- dendro_data(modelo.arb.final , uniform =T)
+
+ggplot() + 
+  geom_segment(data = ddata$segments, 
+               aes(x = x, y = y, xend = xend, yend = yend), colour = "brown", size = 1) + 
+  geom_text(data = ddata$labels, 
+            aes(x = x, y = y, label = label), colour = "#006633", size = 3, vjust = -1) +
+  geom_text(data = ddata$leaf_labels, 
+            aes(x = x, y = y, label = label), colour = "#006633", size = 3, vjust = 1) +
+  theme_dendro() 
+
+## error de prueba
+
+mean((predict(modelo.arb.final, prueba.arb)- prueba.arb$medv)^2)
+```
 
 
 <!---------------------------------------------------------------------------->

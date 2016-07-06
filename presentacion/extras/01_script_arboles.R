@@ -57,17 +57,19 @@ ggplot() +
   geom_segment(data = ddata$segments, 
                aes(x = x, y = y, xend = xend, yend = yend), colour = "brown", size = 1) + 
   geom_text(data = ddata$labels, 
-            aes(x = x, y = y, label = label), colour = "#006633", size = 1.5, vjust = -1) +
+            aes(x = x, y = y, label = label), colour = "#006633", size = 1, vjust = -1) +
   geom_text(data = ddata$leaf_labels, 
-            aes(x = x, y = y, label = label), colour = "#006633", size = 1.5, vjust = 1) +
+            aes(x = x, y = y, label = label), colour = "#006633", size = 1, vjust = 1) +
   theme_dendro() + scale_y_reverse(expand = c(0.2, 0)) + coord_polar(theta="x")
 
-# cp = 25
+# cp = 15 
 plotcp(modelo.arb.completo)
 
-(error.completo <- modelo.arb.completo$cptable %>%
+error.completo <- modelo.arb.completo$cptable %>%
   data.frame() %>% 
-  dplyr::select(nsplit, CP, xerror) )
+  dplyr::select(nsplit, CP, xerror) 
+
+error.completo %>% head(40)
 
 alpha <- error.completo$CP
 
@@ -85,7 +87,7 @@ errores.vmc <- ldply(alpha,
                                   entrenamiento = error.entrena)
                      })
 
-errores.vmc
+#errores.vmc
 
 
 errores.vmc %>% 
@@ -96,12 +98,12 @@ errores.vmc %>%
              colour = variable,
              group = variable)) + 
   geom_line() +
-  geom_vline(xintercept = 25) +
+  geom_vline(xintercept = 19) +
   xlab("Altura del árbol") + 
   ylab("Error")
 
 modelo.arb.final <- rpart(medv~., data = entrena.arb, method = "anova", 
-                             control=rpart.control(cp=0.0018 , xval=10, minbucket=1))
+                             control=rpart.control(cp=.0035 , xval=10, minbucket=1))
 
 ddata <- dendro_data(modelo.arb.final , uniform =T)
 
