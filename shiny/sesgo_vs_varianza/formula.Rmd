@@ -1,0 +1,5 @@
+Los datos se obtuvieron con simulaciones obtenidas a partir de:
+
+$$ Y = sen(2 \\pi X) + \epsilon$$
+
+donde $\epsilon$ es una variable aleatoria $N(0, \sigma ^2)$.
