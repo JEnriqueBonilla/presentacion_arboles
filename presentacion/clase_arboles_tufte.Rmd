@@ -45,6 +45,7 @@ require(tree)
 require(mlbench)
 require(randomForest)
 require(gbm)
+require(data.table)
 ```
 
 ```{r, echo = F}
@@ -141,8 +142,8 @@ datos %>%
   ylab("Tiempo de espera para siguiente erupción")
 ```
 
-Los *árboles de clasificación* (CART, Bosques Aleatorios, etc.)
-son métodos de aprendizaje supervisado. Estos pueden tener como
+Los *métodos basados en árboles* (CART, Bosques Aleatorios, etc.)
+son algoritmos de aprendizaje supervisado. Estos pueden tener como
 respuesta una variable numérica ($Y$) o una variable 
 categórica ($G$).
 
@@ -318,7 +319,7 @@ de la función de pérdida y del tipo de problema. Por lo general,
 $E_{rr\gamma}$ tiene un comportamiento con la misma estructura que 
 $E_{rr}$ pero no igual.
 
-Esta descomposición nos muestra cómo, para minimizar el error de
+Además, dicha descomposición nos muestra cómo, para minimizar el error de
 predicción, es conveniente encontrar un equilibrio entre sesgo
 y varianza: seleccionar un modelo suficientemente complejo para
 que capture la estructura de los datos pero no tan complejo
@@ -385,12 +386,12 @@ err.m %>%
 
 Los modelos basados en árboles son herramientas poderosas
 para la predicción. Estos van particionando, recursivamente, 
-el espacio de covariables (feature space) en rectángulos 
-por medio de modelos simples, cómo constantes. En esta 
-sección, nos enfocaremos en el enfoque *CART*^[@breiman1984classification]. 
+el espacio de covariables (*feature space*) en rectángulos 
+por medio de modelos simples, como constantes. En esta 
+sección, nos enfocaremos en el método *CART*^[@breiman1984classification]. 
 Aunque este tipo de árboles, por si solos, son fácilmente superados 
-en la predicción, construyen la base de técnicas muy poderosas 
-como bosques aleatorios. 
+en la predicción, consituyen la base teórica de técnicas muy poderosas 
+como bosques aleatorios.
 
 Para simplificar, aunque posteriormente veremos que en realidad
 este enfoque es el más conveniente, CART hace 
@@ -513,12 +514,12 @@ es suma de varianzas bernoulli (multinomial).
 $$i(t) = \sum\limits_{k=1}^Kp_k(t)(1-p_k(t)) = 1 -\sum\limits_{k=1}^Kp_k(t)^2$$
 
 - **Error de clasificación**: calcula el porcentaje
-de casos que clasificaste mal respecto a la categoría
+de casos que mal clasificados con respecto a la categoría
 más frecuente en el nodo.
 
 $$i(t) = 1 - \underset{j}{\text{max}}(p_j(t))$$
 
-Cuando $K=2$ estás 3 medidas se comportan similarmente.
+Cuando $K=2$ estas 3 medidas se comportan similarmente.
 Sin embargo, cuando $K > 2$ se recomienda usar, para
 crecer el árbol, Gini o Entropía debido a que contemplan
 lo que pasa a lo largo de todas las clases, no sólo la
@@ -771,10 +772,24 @@ mean((predict(modelo.arb.final, prueba.arb)- prueba.arb$medv)^2)
 <!------------------------ Empiezan siguientes temas ------------------------->
 <!---------------------------------------------------------------------------->
 
-# Bosques Aleatorios
+# Bagging, Bosques Aleatorios y Boosting
 
-Como vimos, los árboles de clasificación 
+Como vimos, los árboles de clasificación sufren de varianza inherente al
+modelo alta aunque sesgo bajo.^[Recordemos: $E_{rr}(x_0) = \sigma_\epsilon^2
++ sesgo_\gamma^2(x_0) + Var_\gamma(x_0)$]. La idea de los métodos que
+veremos a continuación es aumentar el sesgo *suavizando* la predicción al
+promediar la predicción de distintos árboles.
 
+## Bagging
+
+Intuitivamente, *bagging* es considerar la *sabiduría de las masas*.
+
+Consideremos $L^1, L^2, ..., L^B$ muestras **independientes** e idénticamente
+distribuidas del mismo fenómeno $F(x)$. Si con cada una obtenemos un árbol
+$T_{L^i}$, definimos
+$$T'(x) = 1/B \sum_{i=1}^B T_{L^i}(x)$$
+de manera que la predicción de $T'(x)$ es el promedio de los árboles
+$T_{L^i}(x)$
 
 # Referencias
 

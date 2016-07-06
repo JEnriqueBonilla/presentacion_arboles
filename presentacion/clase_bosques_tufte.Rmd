@@ -1,0 +1,301 @@
+---
+title: "Árboles de Clasificación y regresión"
+subtitle: "Introducción al Aprendizaje Estadístico"
+author: "Kael Huerta, Enrique Bonilla"
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_html: default
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+  tufte::tufte_book:
+    citation_package: natbib
+    latex_engine: xelatex
+header-includes: 
+- \usepackage[spanish]{babel}
+- \usepackage[utf8]{inputenc}
+- \usepackage{amsmath,amsfonts,amsthm}
+- \usepackage{graphicx}
+bibliography: bibliografia.bib
+link-citations: yes
+nocite: | 
+  @notas
+---
+
+---
+
+```{r setup, include = F}
+library(tufte)
+## invalidate cache when the tufte version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+### Nota: los paquetes que se utilizaran en estas notas son los siguientes:
+```{r,echo = T, warning = F, message = F,error = F}
+require(ggplot2)
+require(ggdendro)
+require(plyr)
+require(dplyr)
+require(tidyr)
+require(kknn)
+require(rpart)
+require(tree)
+require(mlbench)
+require(randomForest)
+require(gbm)
+```
+
+```{r, echo = F}
+## Cambiando el tema de las gráficas
+theme_set(theme_bw())
+```
+
+# Bagging, Bosques Aleatorios y Boosting
+
+Como vimos, los árboles de clasificación sufren de varianza inherente al
+modelo alta aunque sesgo bajo^[Recordemos: $E_{rr}(x_0) = \sigma_\epsilon^2
++ sesgo_\gamma^2(x_0) + Var_\gamma(x_0)$]. La idea de los métodos que
+veremos a continuación es aumentar el sesgo *suavizando* la predicción al
+promediar la predicción de distintos árboles.
+
+## Bagging
+
+Intuitivamente, **bagging** es considerar la *sabiduría de las masas*. En
+lugar de estimar de un sólo árbol, ponderamos la opinión de muchos.
+
+Consideremos $L^1, L^2, ..., L^B$ muestras **independientes** e idénticamente
+distribuidas del mismo fenómeno $F(x)$.^[Por simplicidad, suponemos que el
+fenómeno tiene una respuesta cuantitativa.] Si con cada una obtenemos
+un árbol $T_{L^i}$, definimos
+$$T'(x) = \frac{1}{B} \sum_{i=1}^B T_{L^i}(x)$$
+como el *árbol bagging ideal* de manera que la predicción de $T'(x)$ es el
+promedio de los árboles $T_{L^i}(x)$. La pregunta es, ¿cómo se desempeña $T'$?
+
+Con respecto al sesgo podemos ver que
+$$\begin{aligned}
+  E[T'(x)] &= \frac{1}{B} \sum_{i=1}^B T_{L^i}(x) \\
+    &= \frac{1}{B} \sum_{i=1}^B T_{L}(x) = E[T_L(x)]
+  \end{aligned}$$
+Por lo que el sesgo de $T'$ es idéntico al de un único árbol.
+
+Sin embargo, la varianza cambia de la siguiente manera
+$$Var(T'(x)) = \frac{1}{B} Var(T_L(x))$$
+a manera de que si $B$ es grande, el error cuadrático medio de $T'$ puede ser
+mucho menor que el de un árbol individual.
+
+La parte relevante aquí es la palabra **independiente** de las muestras. Debido
+a que rara vez contamos con más de una muestra y difícilmente independientes
+entre sí, podemos utilizar muestras *bootstrap*.^[Intuitivamente, si $F(x)$ es
+el mundo real y hacemos inferencia de él con una muestra $L$; *bootstrap*
+supone $L$ como el mundo real y hace inferencia de él con submuestras
+$L^{*i}$.]
+
+Sea $L = \{(x^i, y^i)_{i=1}^N\}$ una muestra de entrenamiento y sean
+$L^{*1}, L^{*2}, ..., L^{*B}$ muestras *bootstrap* de $L$. Es decir, cada
+$L^{*i}$ es una muestra con reemplazo de $(x^i, y^i) \in L$ con mismo tamaño de
+muestra $N$. Entonces el estimador *bagging por bootstrap* viene dado por:
+$$\hat{T}^*(x) = \frac{1}{B} \sum_{i=1}^B T^{*i}(x)$$
+para variable de respuesta cuantitativa. En el caso cualitativo:
+$$\hat{T}^*(x) = argmax_g \{\sum_{i=1}^B I(T^{*i}(x) = g)\}$$
+
+Por propiedades de *bootstrap* se puede ver que el sesgo de $T^*$ se mantiene.
+Para ver que pasa con el error cuadrático medio, se define $T^\dagger$ como
+el estimador *bootstrap* ideal que extrae muestras directamente de $F(x)$ tal
+que $T^\dagger(x) = E[T_L(x)]$. Entonces:
+$$\begin{aligned}
+  E[F(x) - T_L(x)]^2 &= E[F(x) - T^\dagger(x) + T^\dagger(x) -
+      T_L(x)]^2 \\
+    &= E[F(x) - T^\dagger(x)]^2 + E[T_L(x) - T^\dagger(x)]^2 \\
+    &\geq E[F(x) - T^\dagger(x)]^2
+\end{aligned}$$
+Por lo tanto, vemos que al predecir con *bagging* tomando muestras de la
+población, el error cuadrático medio queda exactamente igual o mejora^[Ojo:
+Esta afirmación no se mantiene para la pérdida 0-1. En este caso, *bagging* de
+malos estimadores puede empeorar la predicción.]. En la práctica no se puede
+muestrear de la población original, por lo que esto sólo sugiere que
+*bootstrap* puede ayudar, pero no hay garantía.
+
+Por esto, se busca la manera de *decorrelacionar* las muestras para mejorar el
+error cuadrático. Esto da pie a la técnica que veremos a continuación.
+
+## Bosques Aleatorios
+
+Como vimos, *bagging* puede mejorar la predicción.^[En la práctica
+generalmente se tiene una mejora.] Sin embargo, no está garantizado pues las
+muestras *bootstrap* están correlacionadas entre sí.
+
+La pregunta es, ¿cómo afecta esta correlación?
+
+Supongamos que tenemos $T^*(x)$ un árbol ajustado con *bagging* obtenido de
+muestras *bootstrap* de $F(x)$. Entonces, si condicionamos a la muestra de
+entrenamiento $L$, vemos que:
+$$Var(T^*(x)) = E[Var(T^*(x)|L)] + Var(E[T^*(x)|L])$$
+donde el primer término es la variación inducida por el remuestreo y el segundo
+es la varianza de cada submuestra.
+
+Se puede ver que si
+$$T(x) = \frac{1}{B} \sum_{i=1}^B T^{*i}(x)$$
+es un modelo basado en árboles obtenidos de una muestra *bootstrap*,
+entonces^[Esto porque
+$\begin{aligned}
+  Var(E[T^*(x)|L]) &= E_L[(E[T^*(x)|L])^2] - (E[T^*(x)])^2 \\
+    &= E_L[E[T^{*i}(x)|L]E[T^{*j}(x)|L]] - (E[T^*(x)])^2 \\
+    &= E_L[E[T^{*i}(x)T^{*j}(x)|L]] - (E_L[E[T^*(x)|L]])^2 \\
+    &= Cov(T^{*i}(x), T^{*j}(x))
+\end{aligned}$]
+$$\begin{aligned}
+  Var(T(x)) &= \frac{1}{B} E[Var(T^*(x)|L)] + Var(E[T^*(x)|L]) \\
+    &= \frac{1}{B}E[Var(T^*(x)|L)] + Cov(T^{*i}(x), T^{*j}(x))
+\end{aligned}$$
+
+Por lo que el error cuadrático medio decrece siempre que logremos
+*decorrelacionar* la manera como se construyen los árboles que conforman
+$T(x)$.
+
+Esto lo logramos con **bosques aleatorios** de la siguiente forma:
+
+1. Para $b = 1, 2, ..., B$ y $m \leq p$ fija^[$p$ es el número de variables
+en la muestra $L$]
+    - Seleccionar muestra *bootstrap* $L_b^*$ de $L$
+    - Construir un árbol $T_b^*$ basado en $L_b^*$. Pero en cada nodo,
+  consideramos al azar $m$ variables de las $p$ disponibles como candidatas
+  para cortes.
+2. El predictor está dado por
+$$T_{b.a.}(x) = \frac{i}{B} \sum_{b=1}^B T^{*b}(x)$$
+para regresión. Para clasificación por
+$$T_{b.a.}(x) = argmax_g \{ \sum_{b=1}^B I(T^{*b}(x) = g) \}$$
+
+Por lo tanto, podemos pensar en **bosques aleatorios** como *bagging* con
+árboles *decorrelacionados*. Notemos que los parámetros para controlar la
+complejidad de los modelos vienen dados por $B$ el número de árboles y $m$ el
+número de variables candidatas a corte.
+
+## Bosques Aleatorios en la práctica
+
+A continuación algunas sugerencias de como buscar los valores de los parámetros
+de complejidad y algunas reglas de dedo.^[@friedman2001elements]
+
+**$B$: Número de árboles**
+
+Se elige minimizando una estimación honesta del error. Esto implica hacer $B$
+muy grande hasta que dicha estimación se estabilice.
+
+**$m$: Número de variables candidatas para corte**
+
+La regla de dedo del autor (y del paquete de R) sugiere:
+
+  - $m = \lfloor p / 3 \rfloor$ para regresión
+  - $m = \lfloor \sqrt{p} \rfloor$ para clasificación
+
+**Tamaño de árboles**
+
+Dado que queremos incrementar la varianza de los árboles independientes, se
+recomienda considerar árboles sin podar. Este parámetro también se puede
+afinar.
+
+## Estimación *Out-Of-Bag* (OOB) del error
+
+El proceso de muestreo de los *bosques aleatorios* da una manera simple de
+construir una estimación honesta del error de predicción.
+
+Sea $z_i = (x_i, y_i) \in L$. Definimos
+$$T_{z_i} = \frac{1}{B_{z_i}} \sum_{z_i \notin L^{*j}} T^{*j}(x_i)$$
+donde $B_{z_i} = \sum_j I(z_i \notin L^{*j})$. Es decir, construimos el
+predictor promediando sólo aquellos árboles que **no** usaron $z_i$ en su
+construcción.
+
+Por lo tanto, la estimación *OOB* del error de prueba para el bosque es:^[Es
+importante recalcar que si $B$ es grande, $\hat{Err_{oob}}$ es similar
+a la estimación por validación cruzada  $N$. Sin necesidad de ajustar el modelo
+$N$ veces.]
+$$\hat{Err_{oob}} = \frac{1}{N} \sum_{i=1}^N(y_i - T_{z_i})^2$$
+
+## Importancia de las variables
+
+Otra bondad de los *bosques aleatorios* es que nos permiten calcular una
+medida de la importancia predictiva de las variables de entrada.
+
+Para calcular dicha medida, consideremos un árbol $T^{*j}$. Usando la muestra
+*OOB* de $T^{*j}$, que es $L - L^{*j}$, estimamos su error *OOB*:
+$$\hat{Err_{oob}} = \frac{1}{A_j} \sum_{z_i \in L - L^{*j}}
+(y_i - T^{*j}(x_i)^2)$$
+donde $z_i$ = (x_i, y_i)$ y $A_i = |L - L^{*j}|$ (el tamaño de muestra *OOB*).
+
+Ahora, permutamos los valores de la variable $X_j$ en la muestra *OOB* para
+hacer algo similar a un análisis de sensibilidad y calculamos
+$\hat{Err_{oob}}(T^{*j})$ con la muestra *OOB* con la $k$-ésima variable
+permutada.
+
+Finalmente, promediamos sobre el bosque
+$$\hat{Imp}(k) = \frac{1}{B} \sum_{j=1}^B (\hat{Err_k(T^{*j}) -
+  \hat{Err_{oob}}(T^{*j}))$$
+y denotamos esta medida como la *importancia relativa de la variable
+$x_j$*.^[Podemos interpretar la importancia como el decremento en precisión que
+resulta de *quitar* la variable $x_j$.]
+
+<!-- Borrar al unir archivos -->
+
+```{r, echo = F}
+require(ggplot2)
+require(ggdendro)
+require(plyr)
+require(dplyr)
+require(tidyr)
+require(kknn)
+require(rpart)
+require(tree)
+require(mlbench)
+require(randomForest)
+require(gbm)
+require(data.table)
+theme_set(theme_bw())
+data(BostonHousing)
+set.seed(15)
+train <- sample(1:nrow(BostonHousing),400)
+BostonHousing$train <- F
+BostonHousing$train[train] <- T
+entrena.arb <- BostonHousing[BostonHousing$train,]
+prueba.arb <- BostonHousing[!BostonHousing$train,]
+entrena.arb$train <- NULL
+
+```
+
+
+```{r , fig.cap = c("Error Out-Of-Bag para selección de parámetros", "Importancia de las Variables"), cache = F}
+
+## Método: RandomForest
+## Datos: Boston Housing (librería mlbench)
+## Librerías: randomForest
+
+b <- 2000
+
+## Probamos con distintos parámetros
+bosque.2 <- entrena.arb %>%
+  randomForest(medv ~ ., data = ., ntree = b, mtry = 2)
+bosque.5 <- entrena.arb %>%
+  randomForest(medv ~ ., data = ., ntree = b, mtry = 5)
+bosque.13 <- entrena.arb %>%
+  randomForest(medv ~ ., data = ., ntree = b, mtry = 13)
+
+data.table(iteracion = 1:b,
+    mtry2 = bosque.2$mse,
+    mtry5 = bosque.5$mse,
+    mtry13 = bosque.13$mse) %>%
+  gather(variables, error, -iteracion) %>%
+  ggplot(aes(x = iteracion, y = error, colour = variables, group = variables)) +
+    geom_line()
+
+## Nos quedamos con los mejores parámetros
+bosque <- entrena.arb %>%
+  randomForest(medv ~ ., data = ., ntree = 1000, do.trace = 100, mtry = 13)
+
+varImpPlot(bosque)
+
+## Error cuadrático medio
+## Recordemos que el de árboles de decisión era de ~ 17
+mean((predict(bosque, prueba.arb) - prueba.arb$medv)^2)
+
+
+```
+
