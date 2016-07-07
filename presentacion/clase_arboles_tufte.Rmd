@@ -165,7 +165,7 @@ se puede suponer que $Y = f(X)$ o que los errores no son independientes
 e idénticamente distribuidos.] Nuestro objetivo es estimar $f(X)$
 por medio de una aproximación $\hat{f}$ usando los datos observados.
 ^[Típicamente, la $f$ estimada depende de un parámetro
-o conjunto de parámetros de **complejidad** $\alpha$, i.e, $\hat{f}_{\alpha}$.]
+o conjunto de parámetros de **ajuste** $\alpha$, i.e, $\hat{f}_{\alpha}$.]
 
 Cuando se trata del problema de clasificación, nuestro objetivo es 
 estimar $P(G \mid X)$ y esto se modela directamente. 
@@ -196,6 +196,7 @@ $$\begin{equation*}
 & & & X_0,Y_0 \in P(X,Y)
 \end{aligned}
 \end{equation*}$$ 
+
 En la práctica, esto se traduce a minimizar el error de predicción
 de nuestro modelo condicionado a los datos de entrenamiento.
 
@@ -219,7 +220,7 @@ del error de predicción se puede obtener por medio del *error de entrenamiento*
 $$\bar{err} = \sum\limits_{i=1}^n L(y_i, \hat{f}(x_i))$$
 con $(x_i,y_i) \in \Gamma$. Sin embargo, el error de entrenamiento
 subestima, generalmente, esta cantidad. Esto es porque el error
-de entrenamiento decrece constantemente al aumentar la complejidad
+de entrenamiento decrece constantemente al aumentar la **complejidad**
 del modelo, típicamente llegando a cero, pues si el modelo 
 es muy complejo captura ruido de $\epsilon$.
 
@@ -574,7 +575,7 @@ Como se mencionó en la sección anterior, como primer paso para
 construir nuestro árbol final, el que utilizaremos para predecir,
 construiremos el árbol más grande posible $T_{max}$. Sin embargo, 
 este árbol va a tener varianza alta debido a que es un modelo muy 
-complejo y está sobre-ajustando, lo que nos llevaría a un gran error de 
+complejo y está sobre-ajustando, lo que nos llevaría a un mayor error de 
 predicción.
 
 Lo que se puede hacer es pensar en un criterio de paro para el 
