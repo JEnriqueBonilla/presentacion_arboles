@@ -1,0 +1,323 @@
+---
+title: "Árboles de Clasificación y regresión"
+subtitle: "Introducción al Aprendizaje Estadístico"
+author: "Kael Huerta, Enrique Bonilla"
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_html: default
+  tufte::tufte_handout:
+    citation_package: natbib
+    latex_engine: xelatex
+  tufte::tufte_book:
+    citation_package: natbib
+    latex_engine: xelatex
+header-includes: 
+- \usepackage[spanish]{babel}
+- \usepackage[utf8]{inputenc}
+- \usepackage{amsmath,amsfonts,amsthm}
+- \usepackage{graphicx}
+bibliography: bibliografia.bib
+link-citations: yes
+---
+
+---
+
+```{r setup, include = F}
+library(tufte)
+## invalidate cache when the tufte version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+
+### Nota: los paquetes que se utilizaran en estas notas son los siguientes:
+```{r,echo = T, warning = F, message = F,error = F}
+require(ggplot2)
+require(plyr)
+require(dplyr)
+require(tidyr)
+require(gtools)
+require(mlbench)
+require(partykit)
+require(Formula)
+```
+
+```{r, echo = F}
+## Cambiando el tema de las gráficas
+theme_set(theme_bw())
+```
+
+# Árboles estadísticos
+
+Como se mencionó anteriormente, dos problemas de CART 
+son el sobre-ajuste por tamaño y  cuando 
+hay variables categóricas con muchas categorías. 
+En esta sección se propondrán dos métodos que dan solución 
+al problema usando el enfoque de _Data modeling culture_: 
+**CHI Square Automatic Interaction Detector (CHAID)**^[
+@kass1980exploratory] y **Conditional Trees (CTrees)**^[
+@hothorn2006unbiased].
+
+Estos métodos utilizan el concepto de significancia estadística
+para seleccionar las variables y cortes que construirán
+nuestro árbol. Así, se consideran sólo aquellos efectos
+que mejoren significativamente el árbol y se podrá dar una 
+interpretación estadística.
+
+## CHAID
+
+Este método se basa en el análisis exhaustivo de tablas de contingencia  
+(problema de clasificación) o pruebas ANOVA (problema de regresión), 
+para determinar las mejores variables explicativas y su relación.
+
+Al igual que CART, CHAID puede ser representado mediante
+la estructura de un árbol, sin embargo, no utiliza árboles binarios.
+El algoritmo CHAID genera el número de cortes $m$ que crea necesario 
+para hacer particiones significativas. Además, a diferencia de CART,
+en este algoritmo sólo se pueden usar covariables categóricas.
+
+Dado que el caso de regresión es muy parecido al de clasificación,
+en esta sección sólo explicaremos el segundo.
+
+En el caso de clasificación, se utilizan pruebas 
+**Chi-cuadradas de Pearson**^[Hipótesis nula de independencia 
+entre una covariable y la variable respuesta. Se calcula el 
+estadístico Chi-cuadrada de Pearson 
+$$X^2=  \sum\limits_{j=1}^J\sum\limits_{i=1}^I \frac{  (n_{ij} - \hat{m_{ij}} )^2 }{  \hat{m_{ij}}}$$
+y se computa el valor $p = P(\chi^2 > X^2)$.]
+para determinar si alguna covaraiable divide a la variable
+respuesta $G$ significativamente. Es decir, para toda covariable
+$X_j$ se construye una tabla de contingencia contra $G$ para 
+saber, por medio de una prueba de hipótesis, si existen
+patrones de agrupamiento de la variable respuesta según las
+categorías de $X_j$. 
+
+Por ejemplo, si $X_j$ tuviera 3 categorías$\{A,B,C\}$ 
+y $G$ fuera una variable binaria $\{0,1\}$ se podría notar que
+la mayoría de los $0$ se encuentran en la categoría $A$ y $C$ y
+los $1$ en la categoría $B$, en cuyo caso, dependiendo de la 
+significancia que se elija, se podría rechazar la hipótesis nula.
+
+A diferencia de CART, CHAID crea primero los cortes y después
+se selecciona la variable $X_j$ que va a particionar el nodo
+en curso. El algoritmo se puede describir en los siguientes pasos:
+
+1. Analizamos los datos del nodo en curso.
+2. Para todas las covariables $X_j$
+	+ Se seleccionan las dos categorías de $X_j$
+	(en orden si son nominales) con mayor valor $p$ según la prueba 
+	chi-cuadrada de Pearson para una tabla de contingencia de
+	$2*r$, dónde $r$ es el número de categorías de $G$. Se juntan 
+	si el valor $p$ es **mayor** a un $\alpha_{merge}$ propuesto 
+	por el usuario.
+	+ Se actualizan las categorías, de ser el caso,
+	y se repite el paso anterior hasta quedar con 2 categorías
+	o hasta que no se puedan unir categorías.
+3. Se escoge la variable $X_j$ con mayor valor $p$ tomando
+en cuenta la actualización de las categorías. Si el valor $p$
+es **menor** a un $\alpha_{split}$ determinada por el
+usuario, se particiona el nodo por esta variable usando 
+sus nuevas categorías. En caso contrario, no se particiona 
+el nodo ($\alpha_{split}$ es el criterio de paro). 
+
+Este procedimiento se repite para todos los nodos que se
+vayan creando, empezando por el nodo inicial, hasta que 
+ya no se puedan partir ningún nodo^[Los pasos para juntar
+las categorías son más detallados. Además, utilizan métodos
+como el ajuste de Bonferroni para optimizar el calculo de los 
+valores $p$ con las nuevas categorías. Se recomienda ver la 
+el documento ubicado en la página
+http://www.unige.ch/ses/metri/cahiers/2010_02.pdf .].
+
+Para predecir en estos árboles se pueden usar los criterios
+usados en CART. Sin embargo, es probable que CART los supere
+ya que están construidos para este fin. CHAID es bueno para
+describir los datos y encontrar variables significativamente
+importantes con interacciones.
+
+Las principales desventajas de este método son que necesita 
+muchos datos (cortes no binarios y número de datos en las tablas
+de contingencia) y que no se pueden usar covariables numéricas.
+Además de que la libera CHAID se descontinuó para versiones de
+**R** a partir de la versión 3.3. 
+
+Las desventajas mencionadas se corrigen en el método de 
+árboles condicionales.
+
+
+## CTrees
+
+Los CTrees tratan de obtener lo mejor de los dos mundos:
+buscan covariables significativas para crecer el árbol
+pero aprovechan ideas de CART como cortes binarios y 
+cortes sucedáneos para mejorar su desempeño.
+
+Al igual que CHAID, estos árboles buscan covariable y cortes 
+significativos que separen los datos del nodo en turno. Denotaremos
+como $w = (w_1,\ldots, w_n)$ con $w_i \in \{0,1\}$ a los pesos de los
+datos (**case weights**) ^[Se pueden tomar valores $w_i \geq 0$ 
+para ponderar los datos.] . Toman el valor $w_i = 1$ si el individuo $i$ 
+se encuentra en el nodo que se está analizando y $w_i = 0$ en caso 
+contrario. 
+
+También como en CHAID, necesitamos decidir si hay información
+de la variable respuesta que puede ser explicada por alguna
+de las covariables. En cada nodo, representado por el vector
+de pesos $w$ se busca rechazar la hipótesis global de independencia
+en términos de $P$^[Se usará $P$ en lugar de $p$ para denotar el número
+de covariables y así distinguir del valor $p$.] hipótesis parciales, 
+i.e, 
+$$H^j_0 : F(Y \mid X_j) = F(Y)$$ 
+con 
+$$H_0 = \cap H_0^j$$
+
+Cuando no es posible rechazar $H_0$ para un nivel predeterminado
+$\alpha$ paramos la recursión. Cuando la rechazamos, medimos
+la asociación entre $Y$ y $X_j$ con ayuda de los valores $p$
+y elegimos la variable que tenga mayor asociación, es decir,
+valor $p$ más pequeño.
+
+En CHAID utilizábamos pruebas chi-cuadrada para medir la asociación
+entre $Y$ y $X$, en los CTrees utilizaremos **estadísticos de prueba**
+de la forma
+
+$$T_j(\Gamma, w) = vec(\sum\limits_{i=1}^nw_ig_j(X_{ji})h(Y_i,(Y_1, \ldots, Y_n))^T) \in {\rm I\!R}^{p_jq}$$
+
+
+Donde $\Gamma$ es la muestra de entrenamiento, $w$ son los pesos,
+$g_j : X_j \rightarrow {\rm I\!R}^{P_j}$ es una transformación no 
+aleatoria de la covariable $X_j$, $h : Y\times Y^n \rightarrow {\rm I\!R}^q$
+es la **función de influencia** que depende de $(Y_1, \ldots, Y_n$
+a través de una permutación simétrica y, finalmente, la matriz $p_j \times q$ 
+es transformada en una columna de dimensión $p_jq$ mediante el operador
+$vec$^[Este tipo de estadístico de prueba permite usar variables 
+respuesta y covariables de cualquier tipo].
+
+La distribución de $T_j(\Gamma, w)$ bajo $H^j_o$ depende de la 
+distribución conjunta de $Y$ y $X_j$ la cual es desconocida en la
+mayoría de las circunstancias. Sin embargo, bajo la hipótesis nula
+uno puede deshacerse de esta dependencia fijando las covariables
+y condicionando en todas las permutaciones de la variable respuesta.
+Este principio lleva al procedimiento llamado **permutation test**^[
+@strasser1999asymptotic
+].
+
+El permutation test consiste en usar un procedimiento no paramétrico
+para obtener la distribución del estadístico de prueba bajo la hipótesis
+nula, por medio de calcular todos los valores posibles del estadístico
+de prueba bajo reordenamientos de las $y$ de los datos observados.
+
+En general
+
+- Si la variable respuesta y la covariable es numérica puedes
+elegir a $g$ y $h$ como la identidad  y calcular la correlación
+entre la covariable $X_j$ y todas las posible permutaciones de 
+la variable respuesta. De ahí, se calcula el valor $p$ de este
+permutation test y lo comparas con los de las otras covariable.
+
+- Si las covariables y la variable respuesta son categóricas,
+el estadístico de prueba se puede calcular a través de
+tablas de contingencia.
+
+- Se pueden hacer estadísticos de prueba de todo tipo de
+transformaciones y para todo tipo de covariables
+a partir de este esquema general^[Para mayor información,
+se recomienda consultar la sección 5 de @hothornctree].
+
+
+```{r , cache = F}
+ 
+## Ejemplo
+## Método: Permutation test para respuesta y covariable numérica.
+## Librerias: gtools 
+
+## Datos
+y <- c(1,3,4,5,5); xj <- c(2,2,5,4,5)
+
+## Todas las posibles perutaciones de Y
+perms <- permutations(5,5,y,set=FALSE) 
+
+## Se calcula la correlación de todas las permutaciones 
+## de Y con la covariable :
+cors <- apply(perms, 1, function(perms_row) cor(perms_row,xj)) 
+cors <- cors[order(cors)]
+cors
+
+## Para el valor p: compara la correlación de Y y X_j con 
+## el vector ordenado de la correlación de todas las 
+## permutaciones.
+length(cors[cors>=cor(y,xj)])/length(cors)
+
+## Resultado: 0.1, es decir. valor p de .1
+## Notar que en este caso es una prueba de hipótesis 
+## compuesta de un solo lado.
+```
+
+Aunque se puede usar una generalización de $T_j(\Gamma,w)$
+para calcular el valor $p$ de $H_0$, en la práctica se 
+calcula el valor $p$ de todas las hipótesis parciales.
+Si al menos una es menor a un nivel $\alpha$, se rechaza
+$H_0$ y se selecciona la variable con menor valor $p$
+para particionar el nodo. En caso contrario, se acepta
+$H_0$ y se detiene la recursión^[ver la sección 4 de 
+@hothornctree].
+
+Para elegir la constante de corte del nodo,
+se pueden utilizar las técnicas de CART. Sin embargo,
+generalmente se utiliza una generalización del estadístico
+de prueba para determinar el corte binario más significativo.^[
+ver la sección 4 de @hothornctree]
+
+Los cortes sucedáneos que se elijen son aquellas variables
+que puedan aproximar el corte obtenido por la variable
+$X_j$ mediante el procedimiento anterior. En el paquete
+de $R$ debes de especificar cuantos cortes sucedáneos quieres.
+El valor predeterminado es 0.
+
+# Ejemplo
+
+```{r, fig.cap=sprintf("Ctrees %s.", c("clasificación", "regresión")), cache = F}
+
+## Método: CTree
+## Datos: flores de Fisher
+## Librerias: paritykid, Formula
+ 
+## Modelo
+modelo <- ctree(formula = Species ~ Sepal.Width + Petal.Width, data = iris)
+plot(modelo)
+
+## Método: CTree
+## Datos: Boston Housing (librería mlbench)
+## Librerias: partykit, Formula
+ 
+data(BostonHousing)
+set.seed(15)
+train <- sample(1:nrow(BostonHousing),400)
+BostonHousing$train <- F
+BostonHousing$train[train] <- T
+entrena.arb <- BostonHousing[BostonHousing$train,]
+prueba.arb <- BostonHousing[!BostonHousing$train,]
+entrena.arb$train <- NULL
+
+## Modelo visible
+control.visible <- ctree_control(maxdepth =  2)
+modelo <- ctree(medv~. , data = entrena.arb, control = control.visible)
+plot(modelo)
+
+## Modelo completo
+modelo <- ctree(medv~., data = entrena.arb)
+
+## Error de predicción
+mean((predict(modelo, prueba.arb)- prueba.arb$medv)^2)
+
+```
+
+También existe el concepto de bosques condicionales (Cforest)
+y se encuentra programado en la librería **partykit**.
+
+Como nota, al usar cualquiera método de un sólo árbol en **R** 
+(CART, Ctrees o CHAID) existe un parámetro de la función que 
+se llama **control**. En este parámetro de control se pueden
+especificar cosas extras de los árboles: número mínimo de individuos
+en los nodos, número de cortes sucedáneos, etc. Para mayor información
+se recomienda leer el CRAN de cada función.
