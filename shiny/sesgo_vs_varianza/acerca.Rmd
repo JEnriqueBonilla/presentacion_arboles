@@ -1,4 +1,4 @@
-# Árboles de Clasificación
+# Árboles de Clasificación, Bagging y Bosques Aleatorios
 
 Clase preparada por Kael Huerta y Enrique Bonilla para L15L.
 

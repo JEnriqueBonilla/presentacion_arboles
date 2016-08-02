@@ -89,7 +89,7 @@ El aprendizaje estadístico se divide en dos principales ramas:
 - **Aprendizaje No Supervisado**: no hay variable respuesta.
 Se trata de encontrar estructuras intrínsecas en los datos.
 
-```{r fig-two-separate, fig.cap=sprintf("Aprendizaje supervisado. Problema de %s.", c("regresión", "clasificación")), cache = F}
+```{r fig-two-separate, fig.cap=sprintf("Aprendizaje supervisado. Problema de %s.", c("regresión", "clasificación"))}
 
 ## Método: regresión lineal
 ## Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
@@ -125,7 +125,7 @@ datos %>%
 ```
 
 
-```{r fig-main, fig.cap = "Aprendizaje no supervisado. Problema de agrupamiento.", cache = F}
+```{r fig-main, fig.cap = "Aprendizaje no supervisado. Problema de agrupamiento."}
  
 ## Método: k-medias
 ## Datos: old faithful géiser en Yellowstone National Park, Wyoming, USA
@@ -528,7 +528,7 @@ clase dominante.^[Por ejemplo si tenemos los nodos $(500,200,200)$
 y $(500,50,350)$ el error de clasificación es el mismo
 pero el segundo nodo es mejor porque separa mejor las clases.]
 
-```{r , fig.cap = "Comparación de medidas de impureza. K = 2.", cache = F}
+```{r , fig.cap = "Comparación de medidas de impureza. K = 2."}
  
 gini <- function(p){
   f <- 1-p^2 -(1-p)^2
@@ -676,7 +676,7 @@ categóricas, ver @breiman1984classification o @friedman2001elements )
 
 ## Ejemplo
 
-```{r , fig.cap = c("Árbol completo", "Error de validación cruzada (x-val)", "Error de prueba vs error de entrenamiento", "Árbol podado"), cache = F}
+```{r , fig.cap = c("Árbol completo", "Error de validación cruzada (x-val)", "Error de prueba vs error de entrenamiento", "Árbol podado")}
 
 ## Método: CART (regresión)
 ## Datos: Boston Housing (librería mlbench):
@@ -959,7 +959,7 @@ $x_j$*.^[Podemos interpretar la importancia como el decremento en precisión que
 resulta de *quitar* la variable $x_j$.]
 
 
-```{r , fig.cap = c("Error Out-Of-Bag para selección de parámetros", "Importancia de las Variables"), cache = F}
+```{r , fig.cap = c("Error Out-Of-Bag para selección de parámetros", "Importancia de las Variables")}
 
 ## Método: RandomForest
 ## Datos: Boston Housing (librería mlbench)
@@ -980,7 +980,8 @@ data.table(iteracion = 1:b,
     mtry5 = bosque.5$mse,
     mtry13 = bosque.13$mse) %>%
   gather(variables, error, -iteracion) %>%
-  ggplot(aes(x = iteracion, y = error, colour = variables, group = variables)) +
+  ggplot(aes(x = iteracion, y = error, colour = variables,
+      group = variables)) +
     geom_line()
 
 ## Nos quedamos con los mejores parámetros
@@ -996,3 +997,174 @@ mean((predict(bosque, prueba.arb) - prueba.arb$medv)^2)
 
 ```
 
+
+## Adaboost
+
+Este método también se basa en un ensamble de árboles como *bosques
+aleatorios* y *bagging*. La diferencia con estos otros métodos mencionados es
+que la sucesión de árboles se "adapta" a lo largo de las iteraciones.^[Otro
+enfoque de ver a *Adaboost*, es que es un caso particular de la familia de
+modelos aditivos. Esta familia de modelos busca encontrar un conjunto ortogonal
+de funcionales en cada iteración. Aunque esto queda fuera del alcance de este
+curso, el lector interesado puede ver @friedman2001elements]
+
+Supongamos que la variable de respuesta es $Y = \{-1, 1 \}$ y $X$ las
+variables de entrada. Construiremos una sucesión de $T_1, T_2, ..., T_M$
+árboles para versiones **ponderadas** de la muestra de entrenamiento. El
+clasificador agregado será
+
+$$ T_a(x) = signo \{ \sum_{m = 1}^M \alpha_m T_m (x) \} $$
+
+Los pesos $\alpha_m$ dependerán de la calidad de la predicción de $T_m (x)$.
+
+Notemos que si los pesos $\alpha_m$ son iguales, tenemos un clasificador por
+mayoría de votos, pues
+
+$$\begin{aligned}
+  T(x) &= signo \{ \alpha \sum_{m = 1}^M T_m (x) \} \\
+    &= signo\{ T_m (x) \}
+\end{aligned}$$
+
+### Algoritmo de Adaboost
+
+1. Inicializamos los pesos $\omega_i = \frac{1}{N}$ con $i = 1, 2, ..., N$
+
+2. Para $m = 1, 2, ..., M$:
+
+  a) Ajustar $T_m(x)$ a $L$ ponderado por $\omega_i$'s
+  b) Calcular tasa de error ponderada de $T_m(x)$ como
+    $$ \hat{err_m} = \frac{\sum_{i=1}^N \omega_i^{(m)} I(y_i \neq T_m(x_i))
+    }{\sum_{i=1}^N \omega_i^{(m)}}$$
+      y hacer $\alpha_m = log(\frac{1 - \hat{err_m}}{\hat{err_m}})$
+  c) Poner
+    $$ \omega_i^{(m+1)} = \omega_i^{(m)} exp(\alpha_m I(y_i \neq T_m(x_i))) $$
+
+3. Clasificar con
+$$ T_a(x) = signo \{ \sum_{m = 1}^M \alpha_m T_m (x) \} $$
+
+### Algunas consideraciones
+
+**Consideración 1:** ¿Cómo ajustar $T_m(x)$ con la muestra $L$ ponderada por
+$\omega_1, \omega_2, ..., \omega_N$?
+
+Como vimos, para árboles tenemos distintos criterios de corte y decisión en
+nodos terminales. Por ejemplo, si queremos ajustar un árbol con la muestra
+ponderada y la **entropía** como medida de pureza, tenemos:
+
+$$i(t) = -\sum_{k=1}^K p_k(t)log(p_k(t))$$
+con $p_k(t) = \frac{\sum \omega_i I(g_i = k)}{\sum \omega_i}$
+
+**Consideración 2:** ¿Cómo obtenemos dichos pesos $\omega_i$?
+
+Supongamos $\omega_1^{(m)}, \omega_2^{(m)}, ..., \omega_N^{(m)}$ dados.^[
+Recordemos que podemos inicializar $\omega_i^{(1)}$ con $\frac{1}{N}$ y tener
+un estimador por mayoría de votos]
+Entonces, estimamos $\omega_i^{(m+1)} = \omega_i^{(m)} k_i^{(m)}$, donde
+
+$$
+k_i^{(m)} = 
+  \begin{cases}
+    \frac{1-\hat{err_m}}{\hat{err_m}} & \quad \text{si } T_m(x) \neq y_i\\
+    1 & \quad \text{si } T_m(x) = y_i
+  \end{cases}
+$$
+
+Notemos que si $\hat{err_m} < 1/2$, entonces
+$\frac{1-\hat{err_m}}{\hat{err_m}} > 1$. Es decir, si el predictor se
+desempeña mejor que el azar pero se equivoca al predecir $(y_i, x_i)$,
+entonces *aumentamos* el peso de dicha observación en la siguiente iteración.
+Intuitivamente, estamos forzando a que el algoritmo *preste más atención* a
+observaciones mal clasificadas.
+
+En el caso en que $\hat{err_m} > 1/2$, tenemos que $\alpha_m < 0$ y entonces
+*se voltea* la contribución de $T_m(x)$^[Recordemos que $\alpha_m =
+log(\frac{1-\hat{err_m}}{\hat{err_m}})$].
+
+**Consideración 3:** Es importante recalcar que si $\hat{err_m}$ se reduce,
+$\alpha_m$ se incrementa y viceversa. Por lo que en cada iteración, además de
+darle mayor importancia a los casos más difíciles de pronosticar, al predecir
+le damos mayor peso a los árboles que mejor clasifican.
+
+
+```{r}
+
+## Método: Adaboost
+## Librerías: rpart
+
+set.seed(3003)
+
+## Tamaño de muestra (de entrenamiento)
+N <- 250
+
+## Conjunto de enternamiento
+entrena <- rdply(N, rnorm(10))
+## Modelo 2 * I(x ^ 2 > 9) - 1
+entrena$y <- 2*(apply(entrena[,-1]^2, 1, sum) > 9)-1
+
+## Conjunto de prueba
+prueba <- rdply(1000, rnorm(10))
+prueba$y <- 2*(apply(prueba[,-1]^2, 1, sum) > 9)-1
+
+## Árbol de un sólo corte para comparar
+arbol.1 <- rpart(y~., data = entrena, maxdepth = 1, method = "class")
+
+## Error de árbol con un corte:
+mean(predict(arbol.1, newdata = prueba, type="class")!=prueba$y)
+
+## Árbol completo
+arbol <- rpart(y~., data = entrena, method = "class", cp = 0)
+printcp(arbol)
+
+## Árbol podado
+arbol.pod <- prune(arbol, cp = 0.002)
+## Error de árbol podado
+mean(predict(arbol.pod, newdata = prueba, type = "class") != prueba$y)
+
+## Ada Boost con árboles de 1 corte
+
+arbol.lista <- list()
+M <- 2000
+alpha <- numeric(M)
+error <- numeric(M)
+error.prueba <- numeric(M)
+error.entrena <- numeric(M)
+w <- rep(1,nrow(entrena))
+preds.boost <- numeric(N)
+preds.boost.entrena <- numeric(N)
+
+for(i in 1:M){
+  #print(i)
+  arbol.lista[[i]] <- rpart(y~., data = entrena,
+      weights = w, maxdepth=1, method="class")
+  preds <- predict(arbol.lista[[i]], newdata = entrena, type = "class")
+  incorrectos <-  preds != entrena$y
+  error[i] <- sum(incorrectos*w)/sum(w)
+  alpha[i] <- log((1-error[i])/error[i])
+  w <- w*exp(alpha[i]*(preds != entrena$y))
+  # Función de predicción y evaluación
+  preds.boost <- preds.boost + 0.5*alpha[i]*
+      as.numeric(as.character(predict(arbol.lista[[i]],
+          newdata = prueba, type="class")))
+  preds.boost.entrena <- preds.boost.entrena + 0.5*alpha[i]*
+              as.numeric(as.character(predict(arbol.lista[[i]],
+                  newdata = entrena, type="class")))
+  error.entrena[i] <- mean(sign(preds.boost.entrena) != entrena$y)
+  error.prueba[i] <- mean(sign(preds.boost) != prueba$y)
+}
+
+
+## Graficamos error de entrenamiento
+plot(error.entrena, type = "l", ylim = c(0, 0.6))
+## Como referencia
+abline(h = 0)
+## Graficamos el error de prueba
+lines(error.prueba, col = "red")
+## Error con un árbol podado
+abline(h = mean(predict(arbol.pod, newdata = prueba, type="class")!=prueba$y), col="blue")
+## Error con un árbol
+abline(h = mean(predict(arbol.1, newdata = prueba, type="class")!=prueba$y), col="green")
+
+## Error de Adaboost
+mean(sign(preds.boost) != prueba$y)
+
+```
