@@ -944,7 +944,7 @@ Para calcular dicha medida, consideremos un árbol $T^{*j}$. Usando la muestra
 *OOB* de $T^{*j}$, que es $L - L^{*j}$, estimamos su error *OOB*:
 $$\hat{Err_{oob}} = \frac{1}{A_j} \sum_{z_i \in L - L^{*j}}
 (y_i - T^{*j}(x_i)^2)$$
-donde $z_i$ = (x_i, y_i)$ y $A_i = |L - L^{*j}|$ (el tamaño de muestra *OOB*).
+donde $z_i = (x_i, y_i)$ y $A_i = |L - L^{*j}|$ (el tamaño de muestra *OOB*).
 
 Ahora, permutamos los valores de la variable $X_j$ en la muestra *OOB* para
 hacer algo similar a un análisis de sensibilidad y calculamos
@@ -952,8 +952,7 @@ $\hat{Err_{oob}}(T^{*j})$ con la muestra *OOB* con la $k$-ésima variable
 permutada.
 
 Finalmente, promediamos sobre el bosque
-$$\hat{Imp}(k) = \frac{1}{B} \sum_{j=1}^B (\hat{Err_k(T^{*j}) -
-  \hat{Err_{oob}}(T^{*j}))$$
+$$\hat{Imp}(k) = \frac{1}{B} \sum_{j=1}^B (\hat{Err_k(T^{*j})} -\hat{Err_{oob}}(T^{*j}))$$
 y denotamos esta medida como la *importancia relativa de la variable
 $x_j$*.^[Podemos interpretar la importancia como el decremento en precisión que
 resulta de *quitar* la variable $x_j$.]
