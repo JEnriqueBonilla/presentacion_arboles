@@ -1,16 +1,16 @@
-#--------------------------------------------------------#
-#   Árboles de Decisión, Bosques Aleatorios y Boosting   #
-#   Preparado por:       Kael Huerta y Enrique Bonilla   #
-#                                  06 de Julio de 2016   #
-#--------------------------------------------------------#
+#-------------------------------------------------------#
+#   Árboles de Decisión, Bagging y Bosques Aleatorios   #
+#   Preparado por:      Kael Huerta y Enrique Bonilla   #
+#                                 06 de Julio de 2016   #
+#-------------------------------------------------------#
 
 library(shinydashboard)
 
 sidebar <- dashboardSidebar(
   hr(),
   sidebarMenu(id="tabs",
-    menuItem("Teoría", tabName = "readme", icon = icon("mortar-board"), selected = T),
-    menuItem("Gráfica", tabName = "plot", icon = icon("line-chart")),
+    menuItem("Simulaciones", tabName = "plot", icon = icon("line-chart"), selected =T),
+    menuItem("Teoría", tabName = "readme", icon = icon("mortar-board")),
     menuItem("Datos", tabName = "table", icon = icon("table")),
     menuItem("Códigos",  icon = icon("file-text-o"),
       menuSubItem("ui.R", tabName = "ui", icon = icon("angle-right")),
@@ -36,7 +36,7 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "readme",
       withMathJax(),
-      includeMarkdown("teoria.Rmd")
+      includeMarkdown("../../presentacion/clase_arboles_tufte.Rmd")
     ),
     tabItem(tabName = "plot",
       fluidRow(

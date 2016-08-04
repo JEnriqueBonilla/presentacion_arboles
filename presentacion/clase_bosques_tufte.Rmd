@@ -32,7 +32,7 @@ options(htmltools.dir.version = FALSE)
 ```
 
 ### Nota: los paquetes que se utilizaran en estas notas son los siguientes:
-```{r,echo = T, warning = F, message = F,error = F}
+```{r, echo = T, warning = F, message = F, error = F}
 require(ggplot2)
 require(ggdendro)
 require(plyr)
@@ -234,32 +234,6 @@ y denotamos esta medida como la *importancia relativa de la variable
 $x_j$*.^[Podemos interpretar la importancia como el decremento en precisión que
 resulta de *quitar* la variable $x_j$.]
 
-<!-- Borrar al unir archivos -->
-
-```{r, echo = F}
-require(ggplot2)
-require(ggdendro)
-require(plyr)
-require(dplyr)
-require(tidyr)
-require(kknn)
-require(rpart)
-require(tree)
-require(mlbench)
-require(randomForest)
-require(gbm)
-require(data.table)
-theme_set(theme_bw())
-data(BostonHousing)
-set.seed(15)
-train <- sample(1:nrow(BostonHousing),400)
-BostonHousing$train <- F
-BostonHousing$train[train] <- T
-entrena.arb <- BostonHousing[BostonHousing$train,]
-prueba.arb <- BostonHousing[!BostonHousing$train,]
-entrena.arb$train <- NULL
-
-```
 
 
 ```{r , fig.cap = c("Error Out-Of-Bag para selección de parámetros", "Importancia de las Variables"), cache = F}
@@ -298,4 +272,15 @@ mean((predict(bosque, prueba.arb) - prueba.arb$medv)^2)
 
 
 ```
+
+## Adaboost
+
+Este método también se basa en un ensamble de árboles como *bosques
+aleatorios* y *bagging*. La diferencia con estos otros métodos mencionados es
+que la sucesión de árboles se "adapta" a lo largo de las iteraciones.^[Otro
+enfoque de ver a *Adaboost*, es que es un caso particular de la familia de
+modelos aditivos. Esta familia de modelos busca encontrar un conjunto ortogonal
+de funcionales en cada iteración. Aunque esto queda fuera del alcance de este
+curso, el lector interesado puede ver @friedman2001elements]
+
 

@@ -1,8 +1,8 @@
-#--------------------------------------------------------#
-#   Árboles de Decisión, Bosques Aleatorios y Boosting   #
-#   Preparado por:       Kael Huerta y Enrique Bonilla   #
-#                                  06 de Julio de 2016   #
-#--------------------------------------------------------#
+#-------------------------------------------------------#
+#   Árboles de Decisión, Bagging y Bosques Aleatorios   #
+#   Preparado por:      Kael Huerta y Enrique Bonilla   #
+#                                 06 de Julio de 2016   #
+#-------------------------------------------------------#
 
 library(shinydashboard)
 library(data.table)
